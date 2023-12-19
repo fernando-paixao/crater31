@@ -4,6 +4,7 @@
     <input type="file" id="fileInput" />
     <button onclick="uploadFile()">Upload</button>
     <button onclick="render()">Render</button>
+    <button onclick="openNewTab()">Open in New Tab</button>
 
     <script>
 // Function to render PlantUML code using the PlantText API
@@ -12,6 +13,11 @@ function renderPlantUML(plantUMLCode) {
     var apiUrl = `http://www.plantuml.com/plantuml/${format}/` + compress(plantUMLCode);
 
     $('#imageOutput').attr('src',apiUrl);
+}
+
+function openNewTab() {
+    let plantumlContent = $('#output').val();
+    window.open('https://www.planttext.com/?text='+compress(plantumlContent));
 }
 
 function render() {
