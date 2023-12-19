@@ -1,0 +1,171 @@
+<script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
+
+<div>
+    <input type="file" id="fileInput" />
+    <button onclick="uploadFile()">Upload</button>
+    <button onclick="render()">Render</button>
+
+    <script>
+// Function to render PlantUML code using the PlantText API
+function renderPlantUML(plantUMLCode) {
+    let format = 'svg'; //png
+    var apiUrl = `http://www.plantuml.com/plantuml/${format}/` + compress(plantUMLCode);
+
+    $('#imageOutput').attr('src',apiUrl);
+}
+
+function render() {
+    let plantumlContent = $('#output').val();
+    renderPlantUML(plantumlContent);
+}
+    
+function uploadFile() {
+    var fileInput = document.getElementById('fileInput');
+
+    if (!fileInput.files.length) {
+        alert('Please select a file.');
+        return;
+    }
+
+    var file = fileInput.files[0];
+
+    var reader = new FileReader();
+
+    reader.onload = function () {
+        var fileData = reader.result;
+        
+        console.log('here', fileData);  //, reader.readAsText() //readAsDataURL()
+        $('#input').val(fileData);
+        changeHandlerRendering();
+
+    };
+
+    reader.readAsText(file);
+}
+    </script>
+</div>
+
+<textarea rows="6" cols="33" id="input" onkeyup="changeHandler();" onpaste="changeHandlerRendering"></textarea>
+<textarea rows="6" cols="33" id="output">
+@startmindmap
+
+skin rose
+
+* Solving \n Global \n Warming
+    * Eating differently
+    * Vegan
+@endmindmap
+</textarea>
+
+<script>
+
+function putInsideMindmapPlantuml(plantumlInside) {
+    return `
+@startmindmap
+
+skin rose
+
+${plantumlInside}
+
+@endmindmap
+`;
+}
+
+function escapeAsterisks(str) {
+    return str.replaceAll("*", "~*");
+}
+
+function replaceIdentToAsterisksAndAddSingleSpace(str) {
+    let strToReturn = str.trimRight();
+    
+    let firstPart = '';
+    let whitespacesMatchArr = str.match(/^([ ]+)/g);
+    if(whitespacesMatchArr != null) {
+        firstPart = whitespacesMatchArr[0];
+    }
+    let secondPart = str.substring(firstPart.length);
+    
+    firstPart = '*'+firstPart.replaceAll("    ", "*");
+    secondPart = escapeAsterisks(secondPart);
+    return firstPart+' '+secondPart;
+}
+
+function changeHandler(event, render) {
+    
+    let val = $('#input').val();
+    let lines = val.split("\n");
+
+    let linesTransformed = lines.map(function(item){
+        //let itemEscaped = escapeAsterisks(item);
+        return replaceIdentToAsterisksAndAddSingleSpace(item);
+    })
+
+    let plantUMLCode = putInsideMindmapPlantuml(
+        linesTransformed.join("\n")
+    );
+    $('#output').val(plantUMLCode);
+
+    if(render) {
+        renderPlantUML(plantUMLCode);
+    }
+}
+
+function changeHandlerRendering() {
+    return changeHandler(event, true);
+}
+
+</script>
+
+
+
+
+<!--  taken from https://github.com/johan/js-deflate -->
+<script src="rawdeflate.js"></script>
+<script>
+
+function encode6bit(b) {
+    if (b < 10) {
+    return String.fromCharCode(48 + b);
+    }
+    b -= 10;
+    if (b < 26) {
+    return String.fromCharCode(65 + b);
+    }
+    b -= 26;
+    if (b < 26) {
+    return String.fromCharCode(97 + b);
+    }
+    b -= 26;
+    if (b == 0) {
+    return '-';
+    }
+    if (b == 1) {
+    return '_';
+    }
+    return '?';
+}
+
+function encode64(n){
+    for(r="",i=0;i<n.length;i+=3)r+=i+2==n.length?append3bytes(n.charCodeAt(i),n.charCodeAt(i+1),0):i+1==n.length?append3bytes(n.charCodeAt(i),0,0):append3bytes(n.charCodeAt(i),n.charCodeAt(i+1),n.charCodeAt(i+2));
+    return r
+}
+
+function append3bytes(n,t,i){
+    return c1=n>>2,c2=(n&3)<<4|t>>4,c3=(t&15)<<2|i>>6,c4=i&63,r="",r+=encode6bit(c1&63),r+=encode6bit(c2&63),r+=encode6bit(c3&63),r+=encode6bit(c4&63)}function encode6bit(n){return n<10?String.fromCharCode(48+n):(n-=10,n<26)?String.fromCharCode(65+n):(n-=26,n<26)?String.fromCharCode(97+n):(n-=26,n==0)?"-":n==1?"_":"?"
+}
+
+function compress(n) {
+    n = unescape(encodeURIComponent(n)); 
+    var e = deflate(n), 
+    i = encode64(e);//, 
+    
+    return i;
+}
+
+//http://www.plantuml.com/plantuml/img/SyfFqhLppCbCJbMmKiX8pSd9JmG0
+//http://www.plantuml.com/plantuml/img/c8pP0rVzzMlMTlWwUshIzcnJBwA=
+//http://www.plantuml.com/plantuml/img/Syp9J4vLqBLJSCfFib9mB2t9ICqhoKnEBCdCprC8IYqiJIqkuGBAAUW2rO0LOr5LN92VLvpA1G00
+
+</script>
+
+<img id="imageOutput">

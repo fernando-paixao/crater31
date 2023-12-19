@@ -1,0 +1,344 @@
+<script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" integrity="sha512-dfX5uYVXzyU8+KHqj8bjo7UkOdg18PaOtpa48djpNbZHwExddghZ+ZmzWT06R5v6NSk3ZUfsH6FNEDepLx9hPQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<div>
+    <input type="file" id="fileInput" />
+    <button onclick="uploadFile()">Upload</button>
+    <button onclick="render()">Render</button>
+    <button onclick="openNewTab()">Open in New Tab</button>
+
+    <!--<div id="response"></div>-->
+
+    <div id="plantumlDiagram"></div>
+
+    <script>
+// Function to render PlantUML code using the PlantText API
+function renderPlantUML(plantUMLCode) {
+    let format = 'svg'; //png
+    var apiUrl = `http://www.plantuml.com/plantuml/${format}/` + compress(plantUMLCode);
+
+    $('#imageOutput').attr('src',apiUrl);
+}
+
+function openNewTab() {
+    let plantumlContent = $('#output').val();
+    window.open('https://www.planttext.com/?text='+compress(plantumlContent));
+}
+
+function render() {
+    let plantumlContent = $('#output').val();
+    renderPlantUML(plantumlContent);
+}
+    
+function uploadFile() {
+    var fileInput = document.getElementById('fileInput');
+
+    if (!fileInput.files.length) {
+        alert('Please select a file.');
+        return;
+    }
+
+    var file = fileInput.files[0];
+
+    var reader = new FileReader();
+
+    reader.onload = function () {
+        var fileData = reader.result;
+        
+        console.log('here', fileData);  //, reader.readAsText() //readAsDataURL()
+        $('#input').val(fileData);
+        changeHandlerRendering();
+
+    };
+
+    reader.readAsText(file);
+}
+    </script>
+</div>
+
+<textarea id="input" onkeyup="changeHandler();" onpaste="changeHandlerRendering();">
+</textarea>
+<textarea id="output">
+@startuml C4_Elements
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(personAlias, "Label", "Optional Description")
+Container(containerAlias, "Label", "Technology", "Optional Description")
+System(systemAlias, "Label", "Optional Description")
+
+Rel(personAlias, containerAlias, "Label", "Optional Technology")
+@enduml
+</textarea>
+
+<script>
+
+//new
+
+function csvToJson(csvString) {
+    let result = Papa.parse(csvString, {
+        header: true,
+    });
+    console.log(result);
+    return result.data;
+}
+
+function csvToJsonOldFailing(csvString, lineSeparator, columnSeparator) {
+    if(lineSeparator == undefined) {
+        lineSeparator = "\n";
+    }
+    if(columnSeparator == undefined) {
+        columnSeparator = "\t";
+    }
+
+    var jsonData = [];
+    var headers = [];
+    var rows = csvString.split(lineSeparator);
+    console.log('rows', rows);          
+    for (var i = 0; i < rows.length; i++) {
+        var cells = rows[i].split(columnSeparator);
+        var rowData = {};
+        for(var j=0;j<cells.length;j++){
+            if(i==0){
+                var headerName = cells[j].trim();
+                headers.push(headerName);
+            }else{
+                var key = headers[j];
+                if(key){
+                    rowData[key] = cells[j].trim();
+                }
+            }
+        }
+        //skip the first row (header) data
+        if(i!=0){
+            jsonData.push(rowData);
+        }
+    }
+
+    return jsonData;
+}
+
+//end new
+
+function getRootChilds(rows) {
+    let rootChilds = {};
+    for(let i in rows) {
+        let row = rows[i];
+        if(row.pai != "") {
+            if(rootChilds[row.pai] == undefined) {
+                rootChilds[row.pai] = [];
+            }
+            rootChilds[row.pai].push(row);
+        }
+    }
+    return rootChilds;
+}
+
+function processRoot(rows) {
+    let strToReturn = '';
+
+    let rootChilds = getRootChilds(rows);
+    console.log('rootChilds', rootChilds);
+
+    for(let i in rows) {
+        let row = rows[i];
+        if(row.pai != "") {
+            continue;
+        }
+
+        strToReturn += processChildren([row], rootChilds);
+    }
+
+    return strToReturn;
+}
+
+function processChildren(rows, rootChilds) {
+    let strToReturn = '';
+    for(let i in rows) {
+        let row = rows[i];
+
+        let childsProcessed = "";
+        if(rootChilds[row.nome] != undefined) {
+            childsProcessed = `{
+                `+processChildren(rootChilds[row.nome],rootChilds)+`
+            }`;
+        }
+        let iconPart = '';
+        if(row.icon != undefined && row.icon != '') {
+            iconPart = `, $sprite="${row.icon}"`;
+        }
+        console.log(row);
+        console.log(row.tipo);
+        if(row.tipo == undefined || row.tipo == '') {
+            row.tipo = 'System_Boundary';
+        }
+
+        strToReturn += `${row.tipo}(${row.nome}, "${row.nome}", "${row.description}"${iconPart})${childsProcessed}\n`;
+    }
+
+    return strToReturn;
+}
+
+function sanitize(str) {
+    return str.replace('"','');
+}
+
+function processRels(rows) {
+    let strToReturn = '';
+    for(let i in rows) {
+        let row = rows[i];
+        
+        if(row.relacionamentos != undefined && row.relacionamentos != "") {
+            row.relacionamentos = sanitize(row.relacionamentos);
+            let relations = row.relacionamentos.split("\n");
+            strToReturn += relations.map(function(relation){
+                let relationArr = relation.split(',');
+                let relSuffix = '';
+                if(relationArr[3] != undefined) {
+                    relSuffix = '_'+relationArr[3];
+                }
+
+                return `Rel${relSuffix}(${row.nome}, ${relationArr[0]}, "${relationArr[1]}", "${relationArr[2]}")\n`;
+            }).join("\n");
+        }
+    }
+
+    return strToReturn;
+}
+
+function putInsideC4Plantuml(plantumlInside) {
+    /*
+    !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+    !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+    !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+    !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Dynamic.puml
+    !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Deployment.puml
+    
+    !include https://fernando-paixao.github.io/crater31/C4_Context.puml
+    !include https://fernando-paixao.github.io/crater31/C4_Container.puml
+    !include https://fernando-paixao.github.io/crater31/C4_Component.puml
+    !include https://fernando-paixao.github.io/crater31/C4_Dynamic.puml
+    !include https://fernando-paixao.github.io/crater31/C4_Deployment.puml
+    
+    */
+    
+    return `
+    @startuml
+
+    !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+    !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+    !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+    !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Dynamic.puml
+    !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Deployment.puml
+    
+    !define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+    !define DEVICONS2 https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons2
+    !define FONTAWESOME https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/font-awesome-5
+    !define MATERIAL https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/material
+    ' uncomment the following line and comment the first to use locally
+    ' !include C4_Container.puml
+    !include DEVICONS/angular.puml
+    !include DEVICONS/zend.puml
+    !include DEVICONS/php.puml
+    !include DEVICONS/dotnet.puml
+    !include DEVICONS/java.puml
+    !include DEVICONS/nodejs.puml
+    !include DEVICONS/wordpress.puml
+    !include DEVICONS/msql_server.puml
+    !include DEVICONS/database.puml
+    !include DEVICONS/google_drive.puml
+    
+    !include DEVICONS2/spring.puml
+    
+    !include MATERIAL/cached.puml
+    !include MATERIAL/class.puml
+
+    !include FONTAWESOME/certificate.puml
+    !include FONTAWESOME/server.puml
+    !include FONTAWESOME/envelope.puml
+
+    LAYOUT_WITH_LEGEND()
+
+    ${plantumlInside}
+    
+    @enduml
+    `;
+}
+
+function changeHandler(event, render) {
+    let inputStr = $('#input').val();
+    
+    //old input = "["+inputStr+"]";
+    //let val = JSON.parse(input);
+
+    //csvToJson
+    let val = csvToJson(inputStr);
+    //console.log(input, inputStr);
+    //console.log(val);
+
+    let plantUMLCode = putInsideC4Plantuml(
+        processRoot(val)+processRels(val)
+    );
+
+    $('#output').val(plantUMLCode);
+
+    if(render) {
+        renderPlantUML(plantUMLCode);
+    }
+}
+
+function changeHandlerRendering() {
+    return changeHandler(event, true);
+}
+
+</script>
+
+<!--  taken from https://github.com/johan/js-deflate -->
+<script src="rawdeflate.js"></script>
+<script>
+
+function encode6bit(b) {
+    if (b < 10) {
+    return String.fromCharCode(48 + b);
+    }
+    b -= 10;
+    if (b < 26) {
+    return String.fromCharCode(65 + b);
+    }
+    b -= 26;
+    if (b < 26) {
+    return String.fromCharCode(97 + b);
+    }
+    b -= 26;
+    if (b == 0) {
+    return '-';
+    }
+    if (b == 1) {
+    return '_';
+    }
+    return '?';
+}
+
+function encode64(n){
+    for(r="",i=0;i<n.length;i+=3)r+=i+2==n.length?append3bytes(n.charCodeAt(i),n.charCodeAt(i+1),0):i+1==n.length?append3bytes(n.charCodeAt(i),0,0):append3bytes(n.charCodeAt(i),n.charCodeAt(i+1),n.charCodeAt(i+2));
+    return r
+}
+
+function append3bytes(n,t,i){
+    return c1=n>>2,c2=(n&3)<<4|t>>4,c3=(t&15)<<2|i>>6,c4=i&63,r="",r+=encode6bit(c1&63),r+=encode6bit(c2&63),r+=encode6bit(c3&63),r+=encode6bit(c4&63)}function encode6bit(n){return n<10?String.fromCharCode(48+n):(n-=10,n<26)?String.fromCharCode(65+n):(n-=26,n<26)?String.fromCharCode(97+n):(n-=26,n==0)?"-":n==1?"_":"?"
+}
+
+function compress(n) {
+    n = unescape(encodeURIComponent(n)); 
+    var e = deflate(n), 
+    i = encode64(e);//, 
+    
+    return i;
+}
+
+//http://www.plantuml.com/plantuml/img/SyfFqhLppCbCJbMmKiX8pSd9JmG0
+//http://www.plantuml.com/plantuml/img/c8pP0rVzzMlMTlWwUshIzcnJBwA=
+//http://www.plantuml.com/plantuml/img/Syp9J4vLqBLJSCfFib9mB2t9ICqhoKnEBCdCprC8IYqiJIqkuGBAAUW2rO0LOr5LN92VLvpA1G00
+
+</script>
+
+<img id="imageOutput">
