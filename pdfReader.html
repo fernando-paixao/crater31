@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Viewer with Text Selection</title>
+    <!-- Include pdf.js library -->
+    <!--<script type="text/javascript" src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.min.js" integrity="sha512-Z8CqofpIcnJN80feS2uccz+pXWgZzeKxDsDNMD/dJ6997/LSRY+W4NmEt9acwR+Gt9OHN0kkI1CTianCwoqcjQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+    <p>
+        <input type="file" id="pdfInput" accept=".pdf" onchange="handleFileSelect()">
+        <button onclick="handleFileSelect()">Send file</button>
+    </p>
+    <p>
+        <input type="number" id="pageNumberInput" placeholder="Enter page number">
+        <button onclick="selectPageText()">Select Page</button>
+    </p>
+    <p>
+        <button onclick="previous()">Previous</button>
+        <button onclick="next()">Next</button>
+    </p>
+    <p>
+        <button onclick="selectAllContents()">Select Text</button>
+    </p>
+    <textarea id="textarea" rows="5" cols="30"></textarea>
+    <div id="pdfViewer"></div>
+    
+    <script>
+        let pdfDoc = null;
+        let pageNum = 1;
+
+        function previous() {
+            const pageNumberInput = document.getElementById('pageNumberInput');
+            const selectedPageNum = parseInt(pageNumberInput.value, 10);
+            pageNumberInput.value = selectedPageNum-1;
+            selectPageText();
+        }
+
+        function next() {
+            const pageNumberInput = document.getElementById('pageNumberInput');
+            const selectedPageNum = parseInt(pageNumberInput.value, 10);
+            pageNumberInput.value = selectedPageNum+1;
+            selectPageText();
+        }
+
+        function handleFileSelect() {
+            const fileInput = document.getElementById('pdfInput');
+            const pdfViewer = document.getElementById('pdfViewer');
+
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    const data = new Uint8Array(e.target.result);
+                    renderPdf(data);
+                };
+
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function renderPage(pageNum) {
+            pdfDoc.getPage(pageNum).then(function (page) {
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                const viewport = page.getViewport({ scale: 1.5 });
+
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+
+                
+                page.render(renderContext).promise.then(function () {
+                    pdfViewer.innerHTML = '';
+                    pdfViewer.appendChild(canvas);
+
+                    // Extract text content of the rendered page
+                    page.getTextContent().then(function (textContent) {
+                        const pageText = textContent.items.map(item => item.str).join(' ');
+                        console.log(pageText);
+                        const textareaContent = document.getElementById('textarea');
+                        textareaContent.innerHTML = pageText;
+                        selectAllContents();
+                    });
+                });
+            });
+        }
+
+        function selectAllContents() {
+            const textarea = document.getElementById('textarea');
+            
+            // Use the select method to select all contents
+            textarea.select();
+        }
+
+        function renderPdf(data) {
+            // Using pdf.js to render the PDF
+            pdfjsLib.getDocument(data).promise.then(function (doc) {
+                pdfDoc = doc;
+
+                const numPages = pdfDoc.numPages;
+
+                // Initial page number
+                pageNum = 1;
+
+                renderPage(pageNum);
+            });
+        }
+
+        function selectPageText() {
+            const pageNumberInput = document.getElementById('pageNumberInput');
+            const selectedPageNum = parseInt(pageNumberInput.value, 10);
+
+            if (!isNaN(selectedPageNum) && selectedPageNum > 0 && selectedPageNum <= pdfDoc.numPages) {
+                pageNum = selectedPageNum;
+                renderPage(pageNum);
+            } else {
+                alert('Please enter a valid page number.');
+            }
+        }
+    </script>
+</body>
+</html>
