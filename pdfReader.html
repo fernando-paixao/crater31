@@ -38,11 +38,23 @@
         </div>
     </div>
 
-    <div id="pdfViewer"></div>
+    <button onclick="toggleVisibility()">Show/Hide PDF</button>
+    <div id="pdfViewer" style="display: none;"></div>
     
     <script>
         let pdfDoc = null;
         let pageNum = 1;
+
+        function toggleVisibility() {
+            var myDiv = document.getElementById("pdfViewer");
+
+            // Toggle visibility
+            if (myDiv.style.display === "none") {
+                myDiv.style.display = "block";
+            } else {
+                myDiv.style.display = "none";
+            }
+        }
 
         function setPageNumber(number) {
             const pageNumberInput = document.getElementById('pageNumberInput');
