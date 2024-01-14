@@ -21,15 +21,33 @@
         <button onclick="previous()">Previous</button>
         <button onclick="next()">Next</button>
     </p>
-    <p>
-        <button onclick="selectAllContents()">Select Text</button>
-    </p>
-    <textarea id="textarea" rows="5" cols="30"></textarea>
+
+    <div>
+        <div style="float: left;">
+            <p>
+                <button onclick="selectAllContents()">Select Text</button>
+            </p>
+            <textarea id="textarea" rows="5" cols="30"></textarea>
+        </div>
+
+        <div style="float: left;">
+            <p>
+                <button onclick="selectAllContents2()">Select Translated</button>
+            </p>
+            <textarea id="textarea2" rows="5" cols="30"></textarea>
+        </div>
+    </div>
+
     <div id="pdfViewer"></div>
     
     <script>
         let pdfDoc = null;
         let pageNum = 1;
+
+        function setPageNumber(number) {
+            const pageNumberInput = document.getElementById('pageNumberInput');
+            pageNumberInput.value = number;
+        }
 
         function previous() {
             const pageNumberInput = document.getElementById('pageNumberInput');
@@ -54,6 +72,8 @@
                 const reader = new FileReader();
 
                 reader.onload = function (e) {
+                    setPageNumber(1);
+
                     const data = new Uint8Array(e.target.result);
                     renderPdf(data);
                 };
@@ -95,6 +115,13 @@
 
         function selectAllContents() {
             const textarea = document.getElementById('textarea');
+            
+            // Use the select method to select all contents
+            textarea.select();
+        }
+
+        function selectAllContents2() {
+            const textarea = document.getElementById('textarea2');
             
             // Use the select method to select all contents
             textarea.select();
