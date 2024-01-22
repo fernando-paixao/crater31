@@ -94,6 +94,14 @@
             }
         }
 
+        function removeJapaneseCharacters(inputString) {
+            // Match Japanese characters in the Unicode range
+            var regex = /[\u4E00-\u9FAF]|[\u3040-\u309F]|[\u30A0-\u30FF]|[\u31F0-\u31FF]/g;
+            
+            // Replace Japanese characters with an empty string
+            return inputString.replace(regex, '');
+        }
+
         function renderPage(pageNum) {
             pdfDoc.getPage(pageNum).then(function (page) {
                 const canvas = document.createElement('canvas');
@@ -115,7 +123,8 @@
 
                     // Extract text content of the rendered page
                     page.getTextContent().then(function (textContent) {
-                        const pageText = textContent.items.map(item => item.str).join(' ');
+                        let pageText = textContent.items.map(item => item.str).join(' ');
+                        pageText = removeJapaneseCharacters(pageText);
                         console.log(pageText);
                         const textareaContent = document.getElementById('textarea');
                         textareaContent.innerHTML = pageText;
