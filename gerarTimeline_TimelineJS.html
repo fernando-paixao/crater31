@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimelineJS CSV Upload</title>
+    <!-- Include TimelineJS CSS -->
+    <link title="timeline-styles" rel="stylesheet" href="https://cdn.knightlab.com/libs/timeline3/latest/css/timeline.css">
+    <style>
+        /* Override styles for printing */
+        .timeline-event.timeline-event-disabled {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+    </style>
+</head>
+<body>
+    <h1>TimelineJS CSV Upload</h1>
+    <form id="csv-form">
+        <label for="csv-file">Upload CSV File:</label>
+        <input type="file" id="csv-file" name="csv-file" accept=".csv">
+        <button type="submit">Upload</button>
+    </form>
+
+    <!-- Include TimelineJS library -->
+    <script src="https://cdn.knightlab.com/libs/timeline3/latest/js/timeline.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+    <div id="timeline-container"></div>
+
+    <script>
+        // Function to handle form submission
+        document.getElementById('csv-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission behavior
+
+            var fileInput = document.getElementById('csv-file');
+            var file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a file.');
+                return;
+            }
+
+            // Read CSV file using FileReader API
+            var reader = new FileReader();
+            reader.onload = function(event) {
+                var csvData = event.target.result;
+                parseCSV(csvData);
+            };
+            reader.readAsText(file);
+        });
+
+        // Function to parse CSV data using PapaParse
+        function parseCSV(csvData) {
+            var parsedData = Papa.parse(csvData, { header: true }).data;
+            createTimeline(parsedData);
+        }
+
+        // Function to create timeline using TimelineJS
+        function createTimeline(data) {
+            // Create TimelineJS data format from CSV data
+            var timelineData = {
+                events: []
+            };
+
+            data.forEach(function(row) {
+                timelineData.events.push({
+                    start_date: {
+                        year: row.Date.split('/')[2], // Assuming date format is mm/dd/yyyy
+                        month: row.Date.split('/')[0],
+                        day: row.Date.split('/')[1]
+                    },
+                    text: {
+                        headline: row.Title
+                    }
+                });
+            });
+
+            // Render TimelineJS timeline
+            window.timeline = new TL.Timeline('timeline-container', timelineData);
+        }
+    </script>
+</body>
+</html>

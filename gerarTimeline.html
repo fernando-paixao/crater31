@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timeline em PT-BR com CSV Upload</title>
+    <!-- Include Vis.js CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+    <h1>Timeline em PT-BR com CSV Upload</h1>
+    <form id="csv-form">
+        <label for="csv-file">Upload Arquivo CSV:</label>
+        <input type="file" id="csv-file" name="csv-file" accept=".csv">
+        <button type="submit">Upload</button>
+    </form>
+
+    <br><br>
+
+    <!-- Include Vis.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+    <div id="timeline-container"></div>
+
+    <script>
+        // Function to handle form submission
+        document.getElementById('csv-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission behavior
+
+            var fileInput = document.getElementById('csv-file');
+            var file = fileInput.files[0];
+
+            if (!file) {
+                alert('Por favor, selecione um arquivo.');
+                return;
+            }
+
+            // Read CSV file using FileReader API
+            var reader = new FileReader();
+            reader.onload = function(event) {
+                var csvData = event.target.result;
+                parseCSV(csvData);
+            };
+            reader.readAsText(file);
+        });
+
+        // Function to parse CSV data using PapaParse
+        function parseCSV(csvData) {
+            Papa.parse(csvData, {
+                header: true,
+                complete: function(results) {
+                    createTimeline(results.data);
+                }
+            });
+        }
+
+        // Function to create timeline using Vis.js Timeline
+        function createTimeline(data) {
+            // Create a DataSet (allows two-way data-binding)
+            var items = new vis.DataSet();
+
+            // Add events from CSV data
+            data.forEach(function(row, index) {
+                var eventDate = new Date(row['Date']);
+                var year = eventDate.getFullYear(); // Extract the year from the event date
+
+                items.add({
+                    id: index + 1,
+                    content: year.toString() +' - '+ row['Title'],
+                    start: row['Date'],
+                    description: '', //row['Description']
+                    //title: row['Date'] // Display year in event tooltip
+                });
+            });
+
+            // Configuration for the Timeline
+            var options = {
+                locale: 'pt-br', // Set locale to Portuguese (Brazil)
+                editable: false, // Disable editing
+                zoomable: true, // Enable zooming
+                showCurrentTime: false // Hide current time indicator
+            };
+
+            // Create a Timeline
+            var container = document.getElementById('timeline-container');
+            var timeline = new vis.Timeline(container, items, options);
+        }
+    </script>
+</body>
+</html>
