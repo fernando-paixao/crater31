@@ -155,6 +155,9 @@ function processChildren(rows, rootChilds) {
     let strToReturn = '';
     for(let i in rows) {
         let row = rows[i];
+        if(row.alias == undefined) {
+            row.alias = row.nome;
+        }
 
         let childsProcessed = "";
         if(rootChilds[row.nome] != undefined) {
@@ -172,7 +175,7 @@ function processChildren(rows, rootChilds) {
             row.tipo = 'System_Boundary';
         }
 
-        strToReturn += `${row.tipo}(${row.nome}, "${row.nome}", "${row.description}"${iconPart})${childsProcessed}\n`;
+        strToReturn += `${row.tipo}(${row.nome}, "${row.alias}", "${row.description}"${iconPart})${childsProcessed}\n`;
     }
 
     return strToReturn;

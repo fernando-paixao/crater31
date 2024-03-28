@@ -1,0 +1,122 @@
+<script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" integrity="sha512-dfX5uYVXzyU8+KHqj8bjo7UkOdg18PaOtpa48djpNbZHwExddghZ+ZmzWT06R5v6NSk3ZUfsH6FNEDepLx9hPQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<div>
+    <input type="file" id="fileInput" />
+    <button onclick="uploadFile()">Upload</button>
+
+    <!--<div id="response"></div>-->
+
+    <div id="plantumlDiagram"></div>
+
+    <script>
+    
+function uploadFile() {
+    var fileInput = document.getElementById('fileInput');
+
+    if (!fileInput.files.length) {
+        alert('Please select a file.');
+        return;
+    }
+
+    var file = fileInput.files[0];
+
+    var reader = new FileReader();
+
+    reader.onload = function () {
+        var fileData = reader.result;
+        
+        console.log('here', fileData);  //, reader.readAsText() //readAsDataURL()
+        $('#input').val(fileData);
+        changeHandlerRendering();
+
+    };
+
+    reader.readAsText(file);
+}
+    </script>
+</div>
+
+<textarea id="input" onkeyup="changeHandler();" onpaste="changeHandlerRendering();"></textarea>
+<textarea id="output" rows="20" cols="60"></textarea>
+
+<script>
+
+//new
+
+function csvToJson(csvString) {
+    let result = Papa.parse(csvString, {
+        header: true,
+    });
+    console.log(result);
+    return result.data;
+}
+
+function csvToJsonOldFailing(csvString, lineSeparator, columnSeparator) {
+    if(lineSeparator == undefined) {
+        lineSeparator = "\n";
+    }
+    if(columnSeparator == undefined) {
+        columnSeparator = "\t";
+    }
+
+    var jsonData = [];
+    var headers = [];
+    var rows = csvString.split(lineSeparator);
+    console.log('rows', rows);          
+    for (var i = 0; i < rows.length; i++) {
+        var cells = rows[i].split(columnSeparator);
+        var rowData = {};
+        for(var j=0;j<cells.length;j++){
+            if(i==0){
+                var headerName = cells[j].trim();
+                headers.push(headerName);
+            }else{
+                var key = headers[j];
+                if(key){
+                    rowData[key] = cells[j].trim();
+                }
+            }
+        }
+        //skip the first row (header) data
+        if(i!=0){
+            jsonData.push(rowData);
+        }
+    }
+
+    return jsonData;
+}
+
+//end new
+
+function processField(row) {
+    strToReturn = '';
+    if(row.mandatory) strToReturn+='*';
+    strToReturn+=row.name;
+    if(row.type) strToReturn+=' : '+row.type;
+    if(row.keywords) strToReturn+=' '+row.keywords.split("\n").map(keyword => '<<'+keyword+'>>').join(' ');
+
+    return strToReturn;
+}
+
+function changeHandler(event, render) {
+    let inputStr = $('#input').val();
+    
+    //old input = "["+inputStr+"]";
+    //let val = JSON.parse(input);
+
+    //csvToJson
+    let rows = csvToJson(inputStr);
+    //console.log(input, inputStr);
+    console.log(rows);
+
+    let plantUMLCode = rows.map(row => processField(row)).join("\n");
+
+    $('#output').val(plantUMLCode);
+}
+
+function changeHandlerRendering() {
+    return changeHandler(event, true);
+}
+
+</script>
