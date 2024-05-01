@@ -89,6 +89,47 @@ function csvToJsonOldFailing(csvString, lineSeparator, columnSeparator) {
 
 //end new
 
+//group
+
+function getRootChilds(rows) {
+    let rootChilds = {};
+    for(let i in rows) {
+        let row = rows[i];
+        if(row.table != "") {
+            if(rootChilds[row.table] == undefined) {
+                rootChilds[row.table] = [];
+            }
+            rootChilds[row.table].push(row);
+        }
+    }
+    return rootChilds;
+}
+
+function processRoot(rows) {
+    let strToReturn = '';
+
+    let rootChilds = getRootChilds(rows);
+    console.log('rootChilds', rootChilds);
+
+    for(let i in rootChilds) {
+        let rootChildRows = rootChilds[i];
+
+        //strToReturn += processField(row, rootChilds);
+        let content = rootChildRows.map(row => processField(row)).join("\n");
+        let rootIdentifier = rootChildRows[0].table;
+        strToReturn += `
+entity ${rootIdentifier} {
+${content}
+}
+`;
+
+    }
+
+    return strToReturn;
+}
+
+//main
+
 function processField(row) {
     strToReturn = '';
     if(row.mandatory) strToReturn+='*';
@@ -110,7 +151,8 @@ function changeHandler(event, render) {
     //console.log(input, inputStr);
     console.log(rows);
 
-    let plantUMLCode = rows.map(row => processField(row)).join("\n");
+    let plantUMLCode = processRoot(rows);
+    //let plantUMLCode = rows.map(row => processField(row)).join("\n");
 
     $('#output').val(plantUMLCode);
 }

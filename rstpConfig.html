@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RTSP Access Configuration</title>
+    <style>
+        .additional-info {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h2> Configuração de acesso RTSP </h2>
+    <p> Abaixo estão as etapas para configurar o acesso RTSP a um DVR: </p>
+
+    <div class = "">
+        <H3> Resumo: </h3>
+        <p>
+            Essas etapas são necessárias para configurar o acesso ao RTSP a um DVR porque estabelecem a infraestrutura de rede necessária para permitir a comunicação entre a rede externa (Internet) e o DVR interno.
+            <Ol tipo = "1">
+                <li> O <strong> domínio </strong> fornece o endereço para acessar o DVR remotamente. </li>
+                <li> <strong> encaminhamento de porta </strong> direciona solicitações RTSP da Internet para o DVR dentro da rede local. </li>
+                <li> Atribuir um <strong> fixo IP </strong> ao DVR garante que seu endereço de rede permaneça constante para comunicação consistente. </li>
+            </ol>
+        </p>
+    </div>
+
+    <H3> Detalhes da etapa: </h3>
+    <ol>
+        <li> <strong> Domínio (DVR ou roteador): </strong> <br>
+                O domínio é o endereço através do qual você acessa o DVR (ou roteador) remotamente.
+                <br> Normalmente é um nome de domínio ou endereço IP.
+                <br> Esta etapa é crucial porque identifica onde o DVR pode ser alcançado na Internet.
+                
+                <br><br>
+                <a href="https://youtu.be/Uroq-xdWM-w?si=hHCK0VVK3g0FSfFj&t=16">DDNS DVR Intelbras</a>
+                <a href="https://www.youtube.com/watch?v=dEWtYC9IKWU">No-IP no modem Vivo</a>
+        </li>
+        <li> <strong> Port Forward (roteador): </strong> <br>
+            O encaminhamento da porta é uma técnica usada pelos roteadores para permitir que dispositivos externos acessem os serviços fornecidos pelos dispositivos na rede interna.
+            <br> Como os DVRs geralmente se comunicam sobre portas específicas, como a porta RTSP (normalmente a porta 554), o encaminhamento de portas é necessário para direcionar solicitações externas de RTSP para o DVR dentro da rede local.
+            <br> Sem encaminhamento de portas, pedidos externos seriam bloqueados pelo firewall do roteador. 
+
+            <br><br>
+            <a href="https://www.youtube.com/watch?v=MCUwiSnfUMY">Liberar portas modem da Vivo</a>
+        </li>
+        <li> <strong> IP Fixo (DVR): </strong> <br>
+            Um IP fixo (também conhecido como IP estático) é um endereço IP atribuído a um dispositivo que permanece constante, diferentemente de um endereço IP dinâmico que pode mudar com o tempo.
+            <br>A atribuição de um IP fixo ao DVR garante que seu endereço de rede permaneça consistente.<br> Isso é importante porque, ao configurar o encaminhamento da porta, o roteador precisa conhecer o endereço IP interno do DVR para encaminhar solicitações RTSP para ele.
+            <br> Se o endereço IP do DVR mudar (o que pode acontecer com a atribuição dinâmica de IP), a regra de encaminhamento de porta se tornaria inválida e o acesso remoto ao DVR seria interrompido. 
+
+            <br><br>
+            <a href="https://youtu.be/LMqkCD62ty0?si=4p1ZYmd7zHl2WY4q&t=433">Como configurar um dispositivo com IP FIXO no roteador</a>
+        </li>
+    </ol>
+
+<pre>
+Tools:
+    IP
+        https://whatismyip.com.br/
+            Coloque seu domínio ou IP do roteador
+    Port
+        https://www.yougetsignal.com/tools/open-ports/
+            Remote Address: domínio ou IP do roteador
+            Port Number: sua porta RSTP
+    RSTP Link
+        Para gerar um link RSTP com suas credenciais para sua câmera ou DVR:
+        https://fernando-paixao.github.io/crater31/rstpLink.html
+    RSTP Playback
+        Para testar um link RTSP como o que você forneceu, você pode usar vários softwares de mídia ou ferramentas de linha de comando que suportam o streaming RTSP.        
+        
+        ffplay
+            Uma ferramenta popular de linha de comando para esse fim é o FFPLAY, que faz parte da estrutura multimídia do FFMPEG.
+            Veja como você pode usar o FFPLAY para testar o link RTSP:
+            
+            Na linha de comando
+                ffplay rtsp://domain:port/cam/realmonitor?channel=1&subtype=0
+        VLC
+            A popular tool to open video and streams.
+
+            Na interface do usuário do programa
+                Abra VLC Media Player.
+                Vá em abrir Mídia de Fluxo de Rede.
+                Coloque seu link RTSP (rtsp://domain:port/cam/realmonitor?channel=1&subtype=0) no campo URL da rede.
+                Se estiver tudo certo em alguns instantes as imagens da câmera serão mostradas na tela
+
+            Na linha de comando
+                vlc rtsp://domain:port/cam/realmonitor?channel=1&subtype=0
+</pre>
+
+</body>
+</html>

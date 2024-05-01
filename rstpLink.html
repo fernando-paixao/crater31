@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RTSP Link Generator</title>
+    <style>
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>RTSP Link Generator</h2>
+    <form id="rtspForm">
+        <label for="domain_ip">DOMÍNIO:</label>
+        <input type="text" id="domain_ip" placeholder="Ex: minha-camera.ddns.com.br ou 123.456.78.9" required>
+        
+        <label for="port">${port}:</label>
+        <input type="text" id="port" placeholder="${port} RTSP configurada na câmera" required>
+        
+        <label for="user">USUÁRIO:</label>
+        <input type="text" id="user" placeholder="Usuário de acesso à câmera" required>
+        
+        <label for="password">SENHA:</label>
+        <input type="password" id="password" placeholder="Senha de acesso à câmera" required>
+        
+        <button type="button" onclick="generateRTSPLinks()">Generate RTSP Links</button>
+    </form>
+
+    <h3>Output:</h3>
+    <pre><div id="output"></div></pre>
+
+    <script>
+        function generateRTSPLinks() {
+            var domain_ip = document.getElementById('domain_ip').value;
+            var port = document.getElementById('port').value;
+            var user = document.getElementById('user').value;
+            var password = document.getElementById('password').value;
+            var output = document.getElementById('output');
+
+            // RTSP links based on provided formats
+            var rtspLinks = [
+                { title: 'Intelbras', link: `rtsp://${user}:${password}@${domain_ip}:${port}/cam/realmonitor?channel=1&subtype=0` },
+                { title: 'INTELBRAS-01', link: `rtsp://${user}:${password}@${domain_ip}:${port}/cam/realmonitor?channel=1&subtype=0` },
+                { title: 'INTELBRAS-02', link: `rtsp://${domain_ip}:${port}/user=${user}&password=${password}&channel=1&stream=0.sdp?` },
+                { title: 'Luxvision', link: `rtsp://${domain_ip}:${port}/user=${user}&password=${password}&channel=1&stream=0.sdp` },
+                { title: 'Hikvision', link: `rtsp://${user}:${password}@${domain_ip}:${port}/Streaming/Channels/102` },
+                { title: 'HIKVISION', link: `rtsp://${user}:${password}@${domain_ip}:${port}/h264/ch1/main/av_stream` },
+                { title: 'FOSCAN', link: `rtsp://${user}:${password}@${domain_ip}:${port}/videoMain` },
+                { title: 'HDL', link: `rtsp://${domain_ip}:${port}/user=${user}&password=${password}&channel=1&stream=0.sdp` },
+                { title: 'JFL', link: `rtsp://${user}:${password}@${domain_ip}:${port}/h264/ch1/main/av_stream` },
+                { title: 'MULTILASER', link: `rtsp://${user}:${password}@${domain_ip}:${port}/H264?ch=1&subtype=0` },
+                { title: "Genérico 1", link: `rtsp://${user}:${password}@${domain_ip}:${port}`},
+                { title: 'Genérico 2', link: `rtsp://${user}:${password}@${domain_ip}:${port}/cam/realmonitor?channel=1&subtype=0` },
+                { title: "Genérico h264", link: `rtsp://${user}:${password}@${domain_ip}:${port}/h264?channel=1`},
+                { title: "Genérico sdp", link: `rtsp://${domain_ip}:${port}/user=${user}&password=${password}&channel=1&stream=0.sdp`},
+                { title: "Genérico onvif1", link: `rtsp://${user}:${password}@${domain_ip}:${port}/onvif1`},
+                { title: 'Stream Principal', link: `rtsp://${user}:${password}@${domain_ip}:${port}/cam/realmonitor?channel=1&subtype=0` },
+                { title: 'Stream Extra', link: `rtsp://${user}:${password}@${domain_ip}:${port}/cam/realmonitor?channel=1&subtype=1` },
+                { title: 'TECVOZ: Câmeras IP – Linha TW – Tecvoz', link: `rtsp://${user}:${password}@${domain_ip}:${port}/profile1` },
+                { title: 'DVR/NVR – Linha TW – Tecvoz', link: `rtsp://${user}:${password}@${domain_ip}:${port}/chID=1&streamType=main&linkType=tcpa` },
+                { title: 'DVR/NVR – Linha T1/THK – Tecvoz', link: `rtsp://${user}:${password}@${domain_ip}:${port}/Streaming/Channels/01` },
+                { title: 'DVR – TVZ', link: `rtsp://${domain_ip}:${port}/user=${user}&password=${password}&channel=1&stream=0.sdp` },
+                { title: 'Câmeras IP – Tecvoz TV (Futuro)', link: `rtsp://${domain_ip}:${port}/user=${user}&password=${password}&channel=1&stream=1` },
+                { title: 'Câmeras – Linha T1/THK – Tecvoz', link: `rtsp://${user}:${password}@${domain_ip}:${port}/Streaming/Channels/101` },
+                { title: 'Câmeras – Linha ICB Inteligente – Tecvoz', link: `rtsp://${user}:${password}@${domain_ip}:${port}/mode=real&idc=1&ids=1` },
+                { title: 'ALIVE', link: `rtsp://${domain_ip}:${port}/user=${user}&password=${password}&channel=1&stream=0.sdp?real_stream` },
+                { title: 'AXIS', link: `rtsp://${user}:${password}@${domain_ip}:${port}/axis-media/media.amp?videocodac=h264` },
+                { title: 'CLEAR', link: `rtsp://${domain_ip}:${port}/user=${user}&password=${password}&channel=1&stream=0.sdp` },
+                { title: 'DAHUA', link: `rtsp://${domain_ip}:${port}/user=${user}&password=${password}&channel=1&stream=0.sdp?` },
+                { title: 'GREATEK', link: `rtsp://${domain_ip}:${port}/user=${user}&password=${password}&channel=1&stream=0.sdp` },
+                { title: 'GIGA', link: `rtsp://${domain_ip}:${port}/user=${user}&amp;password=${password}&amp;channel=1&amp;stream=0.sdp` },
+                { title: 'HEROSPEED DVR', link: `rtsp://${user}:${password}@${domain_ip}:${port}/snap.jpg` },
+                { title: 'JORTAN', link: `rtsp://${domain_ip}:${port}/user=${user}&password=${password}&channel=1&stream=0.sdp` },
+                { title: 'LG', link: `rtsp://${user}:${password}@${domain_ip}:${port}/Master-0` },
+                { title: 'VENETIAN 1', link: `rtsp://${domain_ip}:${port}/user=${user}&password=${password}&channel=1&stream=0.sdp?` },
+                { title: 'VENETIAN 2', link: `rtsp://${user}:${password}@${domain_ip}:${port}/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif` },
+                { title: 'VIVOTEK', link: `rtsp://${user}:${password}@${domain_ip}:${port}/live.sdp` },
+                { title: 'TWG', link: `rtsp://${domain_ip}:${port}/user=${user}&password=${password}&channel=1&stream=0.sdp?` },
+                { title: 'ZAVIO', link: `rtsp://${user}:${password}@${domain_ip}:${port}/video.pro1` },
+                // Add more titles and links here
+            ];
+
+            // Clear previous output
+            output.innerHTML = '';
+
+            // Display generated links with titles and links separated by newline
+            rtspLinks.forEach(link => {
+                var p = document.createElement('p');
+                p.textContent = `${link.title}:\n${link.link}\n`;
+                output.appendChild(p);
+            });
+        }
+    </script>
+</body>
+</html>

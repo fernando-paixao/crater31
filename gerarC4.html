@@ -155,7 +155,7 @@ function processChildren(rows, rootChilds) {
     let strToReturn = '';
     for(let i in rows) {
         let row = rows[i];
-        if(row.alias == undefined) {
+        if(row.alias == undefined || row.alias == '') {
             row.alias = row.nome;
         }
 
