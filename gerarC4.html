@@ -34,7 +34,88 @@ function render() {
     let plantumlContent = $('#output').val();
     renderPlantUML(plantumlContent);
 }
+
+function transformTxtToArrayObject(text) {
+    const lines = text.split('\n');
+    const result = [];
+    const parentStack = [];  // Keeps track of the hierarchy based on indentation
+
+    lines.forEach(line => {
+        const trimmedLine = line.trim();
+        if (trimmedLine === '') return;  // Skip empty lines
+
+        const currentIndentation = line.length - trimmedLine.length;
+        
+        // Find the parent by comparing indentation levels
+        while (parentStack.length > 0 && parentStack[parentStack.length - 1].indentation >= currentIndentation) {
+            parentStack.pop();  // Remove elements that are on the same or higher level
+        }
+
+        const parent = parentStack.length > 0 ? parentStack[parentStack.length - 1].fullName : '';
+
+        // Create the full name based on the parent's full name
+        const fullName = parent ? `${parent}/${trimmedLine}` : trimmedLine;
+
+        // Add the current element to the result array
+        result.push({
+            parent: parent,
+            name: fullName
+        });
+
+        // Push the current line onto the parentStack with its indentation
+        parentStack.push({ fullName: fullName, indentation: currentIndentation });
+    });
+
+    return result;
+}
+
+function transformTxtToCsv(items) {
+    let strToReturn = '';
+    strToReturn += [
+        'pai',
+        'nome',
+        'relacionamentos',
+        'alias',
+        'tipo',
+        'description',
+        'icon',
+    ].join('\t')+'\n';
     
+    strToReturn += items.map(function(item){
+        //return {
+        //    pai: item.parent,
+        //    nome: item.name,
+        //    relacionamentos: '',	
+        //    alias: '',	
+        //    tipo: '',	
+        //    description: '',	
+        //    icon: '',
+        //};
+        let parentSlug = slug(item.parent);
+        return [
+            parentSlug,
+            slug(item.name),
+            '',	
+            presentAliasFromTreeTxt(item.name, item.parent),
+            '',	
+            '',	
+            '',
+        ].join('\t');
+    }).join('\n');
+    return strToReturn;
+}
+
+function slug(str) {
+    return str.replace(/[.\(\)$, \/]/g, '_');
+}
+
+function presentAliasFromTreeTxt(str, parentName) {
+    //return str.replace('.php', '.php ');    //separate methods  //will include space in final
+    
+    //supress name of parent on his child
+    return str.replace(parentName+'/', ''); // '/' is the separator defined when processing the tree
+}
+ 
 function uploadFile() {
     var fileInput = document.getElementById('fileInput');
 
@@ -44,13 +125,21 @@ function uploadFile() {
     }
 
     var file = fileInput.files[0];
+    const fileName = file.name; // File name
+    const fileExtension = fileName.split('.').pop();
 
     var reader = new FileReader();
 
     reader.onload = function () {
         var fileData = reader.result;
         
-        console.log('here', fileData);  //, reader.readAsText() //readAsDataURL()
+        if(fileExtension == 'txt') {
+            fileData = transformTxtToArrayObject(fileData);
+            fileData = transformTxtToCsv(fileData);
+        }
+        x = fileData;
+        
+        //console.log('here', fileData, reader);  //, reader.readAsText() //readAsDataURL()
         $('#input').val(fileData);
         changeHandlerRendering();
 
@@ -174,8 +263,8 @@ function processChildren(rows, rootChilds) {
         if(row.icon != undefined && row.icon != '') {
             iconPart = `, $sprite="${row.icon}"`;
         }
-        console.log(row);
-        console.log(row.tipo);
+        //console.log(row);
+        //console.log(row.tipo);
         if(row.tipo == undefined || row.tipo == '') {
             row.tipo = 'System_Boundary';
         }
