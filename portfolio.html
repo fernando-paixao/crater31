@@ -24,8 +24,10 @@
             padding: 10px;
         }
         .menu-item {
-            cursor: pointer;
             margin: 5px 0;
+        }
+        .clickable {
+            cursor: pointer;
         }
     </style>
 </head>
@@ -40,6 +42,56 @@ document.addEventListener('DOMContentLoaded', () => {
         //<img src="https://marinegeo.github.io/assets/img/MarineGEO_logo.png" width="200" height="100">
         //![MarineGEO circle logo](https://marinegeo.github.io/assets/img/MarineGEO_logo.png
         //professionals
+        {
+            menuPaths: ['me.contact'],
+            markdownContent: '# Me\nE-mail: fvp.eng.software@gmail.com\n\nLinkedIn:https://www.linkedin.com/in/fernando-vieira-paix%C3%A3o-326817142/',
+            keywords: ['me']
+        },
+        {
+            //parei aqui no content, pensei em criar depois de duas linhas experiências passadas de estudo e profissionais
+            menuPaths: ['me.experience'],
+            markdownContent: '# Me\nI\'m a professional developer since 01/09/2008\n\nToday as fullStack developer on Soluti on a remote job\n\nFreelancer and instructor sometimes\n\nMore in my curriculum: https://www.linkedin.com/in/fernando-vieira-paix%C3%A3o-326817142/overlay/1583505076069/single-media-viewer/?profileId=ACoAACKmAg4B57vaQeR_5NIkTEGnmyTB4mx15TQ',
+            keywords: ['me']
+        },
+        {
+            menuPaths: ['me.interest'],
+            markdownContent: '# Me\n\nSoftware Architecture\n\nSoftware Engineering\n\nProgramming',
+            keywords: ['me']
+        },
+        {
+            menuPaths: ['me.products'],
+            markdownContent: '# Products\n\nTech Speechs\n\nTech Consultant\n\nQuick MVPs\n\nFreelancer Job\n\nSoftware Automations to Optimize\n\nMindmaps\n\nSpreadsheets',
+            keywords: ['me']
+        },
+        {
+            menuPaths: ['me.projects.MindmapGrammar'],
+            markdownContent: '# MindmapGrammar\n\nReplit (source code):https://replit.com/@fvpengsoftware/PeriodGrammarCategorized\n\n<img src="public/mindmapGrammar.png" width="100%">',
+            //https://drive.usercontent.google.com/download?export=view&id=1ON6HqddHTtRAd1jDBuuz2uw-OXhJ-iJO
+            //https://drive.usercontent.google.com/download?export=view&id=1Px7mOq76SRsDJzwCUh-EqAZcrPfF9_tn
+            //https://drive.google.com/file/d/1ON6HqddHTtRAd1jDBuuz2uw-OXhJ-iJO/view?usp=drive_link
+            //<img src="https://marinegeo.github.io/assets/img/MarineGEO_logo.png" width="200" height="100">
+            //![MarineGEO circle logo](https://marinegeo.github.io/assets/img/MarineGEO_logo.png
+            keywords: ['me', 'projects', 'mindmap', 'nltk', 'naturalLanguage', 'python', 'plantuml']
+        },
+        //mindmapFromText
+        //phpParser
+        {
+            menuPaths: ['me.projects.C4FromProjectTree'],
+            markdownContent: '# C4 From Project Tree\n\nGitHub:https://fernando-paixao.github.io/crater31/gerarC4.html\n\nInput:'+`
+\`\`\`
+App.php
+    start()
+    stop()
+composer.json
+composer.lock
+index.php
+    __construct($prefix)
+    enterNode($node)
+\`\`\`
+            `+'\n\n<img src="public/c4FromTree.png" width="100%">',
+            keywords: ['me', 'projects', 'tree', 'c4', 'plantuml']
+        },
+        //me, contact, experience, interest, products
         {
             menuPaths: ['programming.youtubeReferences.FabioAkita'],
             markdownContent: '# Fábio Akita\nLink: https://www.youtube.com/@Akitando/videos\n\nProgramming tips, computer science topics and professional attitudes.',
@@ -129,6 +181,11 @@ document.addEventListener('DOMContentLoaded', () => {
             keywords: ['professionalReference', 'programming', 'architecture', 'FrankBuschmann', 'RegineMeunier', 'HansRohnert', 'PeterSommerlad', 'MichaelStal']
         },
         {
+            menuPaths: ['books.Dafydd_Stuttard_Marcus_Pinto.WebApplicationHackersHandbook'],
+            markdownContent: '# The Web Application Hacker’s Handbook\nBy: Dafydd Stuttard and Marcus Pinto',
+            keywords: ['professionalReference', 'programming', 'security', 'DafyddStuttard', 'MarcusPinto']
+        },
+        {
             menuPaths: ['programming.staticalAnalysis.phpcbf', 'languages.php.phpcbf'],
             markdownContent: '# PHP CBF\nLink: https://phpqa.io/projects/phpcbf.html\n\nCode beautifier, to be used with PHP CS fixing automatically what it has rules for',
             keywords: ['languagePHP', 'language', 'staticalAnalysis', 'phpcbf', 'phpcs', 'qualityAssurance']
@@ -204,27 +261,15 @@ document.addEventListener('DOMContentLoaded', () => {
             keywords: ['tools', 'commandLine', 'convert', 'imageMagick']
         },
         {
-            menuPaths: ['me.contact'],
-            markdownContent: '# Me\nE-mail: fvp.eng.software@gmail.com\n\nLinkedIn:https://www.linkedin.com/in/fernando-vieira-paix%C3%A3o-326817142/',
-            keywords: ['me']
+            menuPaths: ['community.discord.english'],
+            markdownContent: '# English Community on Discord\n\nEnglish:https://discord.com/channels/363985050578190336',
+            keywords: ['community','discord','english']
         },
         {
-            //parei aqui no content, pensei em criar depois de duas linhas experiências passadas de estudo e profissionais
-            menuPaths: ['me.experience'],
-            markdownContent: '# Me\nI\'m a professional developer since 01/09/2008\n\nToday as fullStack developer on Soluti on a remote job\n\nFreelancer and instructor sometimes\n\nMore in my curriculum: https://www.linkedin.com/in/fernando-vieira-paix%C3%A3o-326817142/overlay/1583505076069/single-media-viewer/?profileId=ACoAACKmAg4B57vaQeR_5NIkTEGnmyTB4mx15TQ',
-            keywords: ['me']
+            menuPaths: ['community.discord.devsjava'],
+            markdownContent: '# Devs Java Community on Discord\n\nDevs Java:https://discord.com/channels/1065712289216483510',
+            keywords: ['community','discord', 'java','english']
         },
-        {
-            menuPaths: ['me.interest'],
-            markdownContent: '# Me\n\nSoftware Architecture\n\nSoftware Engineering\n\nProgramming',
-            keywords: ['me']
-        },
-        {
-            menuPaths: ['me.products'],
-            markdownContent: '# Products\n\nTech Speechs\n\nTech Consultant\n\nQuick MVPs\n\nFreelancer Job\n\nSoftware Automations to Optimize\n\nMindmaps\n\nSpreadsheets',
-            keywords: ['me']
-        }
-        //me, contact, experience, interest, products
     ];
 
     const menuContainer = document.getElementById('menu');
@@ -261,6 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 li.textContent = key;
 
                 if (tree[key]._contentIndex !== undefined) {
+                    li.classList.add('clickable');
                     li.dataset.contentIndex = tree[key]._contentIndex;
                     li.addEventListener('click', (e) => {
                         e.stopPropagation();  // Prevent event bubbling
@@ -319,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
     buildMenu(contents);
     // Display the first content by default
     if (contents.length > 0) {
-        let initSelectingIndex = 33;
+        let initSelectingIndex = 1;
         displayContent(contents[initSelectingIndex].markdownContent);
         displayKeywords(contents[initSelectingIndex].keywords);
     }
