@@ -29,6 +29,9 @@
         .clickable {
             cursor: pointer;
         }
+        .clickable a {
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
@@ -89,7 +92,22 @@ index.php
     enterNode($node)
 \`\`\`
             `+'\n\n<img src="public/c4FromTree.png" width="100%">',
-            keywords: ['me', 'projects', 'tree', 'c4', 'plantuml']
+            keywords: ['me', 'projects', 'tree', 'c4', 'plantuml', 'javascript']
+        },
+        {
+            menuPaths: ['me.projects.TxtToMindmap'],
+            markdownContent: '# Txt To Mindmap\n\nUsage:https://fernando-paixao.github.io/crater31/gerarMindmap.html\n\nGitHub:https://github.com/fernando-paixao/crater31/blob/master/gerarMindmap.html\n\n<img src="public/mindmap.png" width="100%">',
+            keywords: ['me', 'projects', 'wiki', 'javascript']
+        },
+        {
+            menuPaths: ['me.projects.SimpleWiki'],
+            markdownContent: '# Simple Wiki\n\nUsage:https://fernando-paixao.github.io/crater31/portfolio.html\n\nGitHub:https://github.com/fernando-paixao/crater31/blob/master/portfolio.html\n\n<img src="public/wiki.png" width="100%">\n\n<img src="public/wikiKeywords.png" width="100%">',
+            keywords: ['me', 'projects', 'wiki', 'javascript']
+        },
+        {
+            menuPaths: ['me.projects.tvMazeFlutter'],
+            markdownContent: '# TV Maze Flutter\n\nGitHub:https://github.com/fernando-paixao/tvmaze',
+            keywords: ['me', 'projects', 'tvMaze', 'flutter', 'mobile']
         },
         //me, contact, experience, interest, products
         {
@@ -339,18 +357,25 @@ index.php
 
                 const li = document.createElement('li');
                 li.classList.add('menu-item');
-                li.textContent = key;
+                
+                const contentIndex = tree[key]._contentIndex;
+                let liContent = key;
 
                 if (tree[key]._contentIndex !== undefined) {
+                    liContent = `<a href="?index=${contentIndex}">${key}</a>`;    
+
                     li.classList.add('clickable');
                     li.dataset.contentIndex = tree[key]._contentIndex;
                     li.addEventListener('click', (e) => {
+                        e.preventDefault();
                         e.stopPropagation();  // Prevent event bubbling
                         const contentIndex = li.dataset.contentIndex;
+                        console.log('index',contentIndex);
                         displayContent(contents[contentIndex].markdownContent);
                         displayKeywords(contents[contentIndex].keywords);
                     });
                 }
+                li.innerHTML = liContent;
 
                 ul.appendChild(li);
                 if (Object.keys(tree[key]).length > 0) {
@@ -397,11 +422,24 @@ index.php
         displayContent(resultMarkdown);
     }
 
+    function getQueryParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams;
+    }
+
     // Initial Render
     buildMenu(contents);
     // Display the first content by default
     if (contents.length > 0) {
         let initSelectingIndex = 1;
+        
+        let urlParams = getQueryParams();
+        let index = urlParams.get('index');
+        let indexNumber = parseInt(index);
+        if(indexNumber >= 0) {
+            initSelectingIndex = indexNumber;
+        }
+        
         displayContent(contents[initSelectingIndex].markdownContent);
         displayKeywords(contents[initSelectingIndex].keywords);
     }
