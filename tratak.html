@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fullscreen Image and MP3</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: black;
+    }
+    #container {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 3em;
+      text-align: center;
+      transition: opacity 1s ease;
+    }
+    #container.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #image {
+      position: absolute;
+      max-width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    #button-container {
+      position: absolute;
+      bottom: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1.2em;
+      border: none;
+      background-color: #007BFF;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <img id="image" src="public/tratak/Tratak_3-1.png" alt="Fullscreen Image">
+    <div id="text" style="display: none;">Parabéns! Perseverança e Constância!</div>
+  </div>
+  
+  <div id="button-container">
+    <p>
+        <button onclick="playTratak(2)"><i class="fa fa-play" style="font-size:24px"></i> 2</button>
+        <button onclick="playTratak(3)"><i class="fa fa-play" style="font-size:24px"></i> 3</button>
+        <button onclick="stopTratak()"><i class="fa fa-stop" style="font-size:24px"></i></button>
+        <!--<button onclick="openFullscreen('container')"><i class="fa fa-expand" style="font-size:24px"></i></button>-->
+    </p>
+    <p>
+        <button onclick="playAudio()"><i class="fa fa-play" style="font-size:24px"></i></button>
+        <button onclick="stopAudio()"><i class="fa fa-stop" style="font-size:24px"></i></button>
+    </p>
+    
+    <audio id="audio" src="public/tratak/Johann_Pachelbel_Canon_Re_Maior.mp3"></audio>
+  </div>
+
+  <script>
+    // Change to text after a delay
+    
+
+    var intervalHandler;
+    function playTratak(minutes) {
+        const displayTime = 60*minutes; // Seconds to display the image
+        const imageElement = document.getElementById("image");
+        const textElement = document.getElementById("text");
+
+        imageElement.style.display = "block";
+        textElement.style.display = "none";
+
+        intervalHandler = setTimeout(() => {
+        imageElement.style.display = "none";
+        textElement.style.display = "block";
+        document.exitFullscreen();
+        }, displayTime * 1000);
+
+        //view
+        openFullscreen('container');
+    }
+
+    function stopTratak() {
+        clearInterval(intervalHandler);
+        
+        //view
+        const imageElement = document.getElementById("image");
+        const textElement = document.getElementById("text");
+
+        imageElement.style.display = "block";
+        textElement.style.display = "none";
+        
+        //necessary?
+        exitFullscreen();
+    }
+
+    // Play MP3 on button click
+    function playAudio() {
+      const audio = document.getElementById("audio");
+      audio.play();
+    }
+
+    function stopAudio() {
+      const audio = document.getElementById("audio");
+      audio.pause();
+      audio.currentTime = 0;
+    }
+
+    /* When the openFullscreen() function is executed, open the video in fullscreen.
+    Note that we must include prefixes for different browsers, as they don't support the requestFullscreen method yet */
+    function openFullscreen(elementId) {
+        var elem = document.getElementById(elementId);
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) { /* Safari */
+            elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) { /* IE11 */
+            elem.msRequestFullscreen();
+        }
+    }
+  </script>
+</body>
+</html>
