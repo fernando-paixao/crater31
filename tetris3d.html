@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Tetris with WebGL</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        // WebGL setup
+        const canvas = document.getElementById('gameCanvas');
+        const gl = canvas.getContext('webgl');
+        
+        if (!gl) {
+            alert('WebGL not supported');
+            throw new Error('WebGL not supported');
+        }
+
+        // Resize canvas
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+
+        // Shaders
+        const vertexShaderSource = `
+            attribute vec3 aPosition;
+            uniform mat4 uModelMatrix;
+            uniform mat4 uViewMatrix;
+            uniform mat4 uProjectionMatrix;
+
+            void main() {
+                gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition, 1.0);
+            }
+        `;
+
+        const fragmentShaderSource = `
+            precision mediump float;
+            uniform vec4 uColor;
+
+            void main() {
+                gl_FragColor = uColor;
+            }
+        `;
+
+        function createShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error('Shader compile failed:', gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            return shader;
+        }
+
+        function getCubeVetices(unitSizeTetrisBlock) {  //points
+            return new Float32Array([
+                // Front face
+                /**/
+                -1*unitSizeTetrisBlock, -1*unitSizeTetrisBlock,  1*unitSizeTetrisBlock,
+                1*unitSizeTetrisBlock, -1*unitSizeTetrisBlock,  1*unitSizeTetrisBlock,
+                1*unitSizeTetrisBlock,  1*unitSizeTetrisBlock,  1*unitSizeTetrisBlock,
+                -1*unitSizeTetrisBlock,  1*unitSizeTetrisBlock,  1*unitSizeTetrisBlock,
+
+                // Back face
+                /**/
+                -1*unitSizeTetrisBlock, -1*unitSizeTetrisBlock, -1*unitSizeTetrisBlock,
+                1*unitSizeTetrisBlock, -1*unitSizeTetrisBlock, -1*unitSizeTetrisBlock,
+                1*unitSizeTetrisBlock,  1*unitSizeTetrisBlock, -1*unitSizeTetrisBlock,
+                -1*unitSizeTetrisBlock,  1*unitSizeTetrisBlock, -1*unitSizeTetrisBlock,
+
+                //third face
+                /*
+                -1*unitSizeTetrisBlock, -1*unitSizeTetrisBlock, -2*unitSizeTetrisBlock,
+                1*unitSizeTetrisBlock, -1*unitSizeTetrisBlock, -2*unitSizeTetrisBlock,
+                1*unitSizeTetrisBlock,  1*unitSizeTetrisBlock, -2*unitSizeTetrisBlock,
+                -1*unitSizeTetrisBlock,  1*unitSizeTetrisBlock, -2*unitSizeTetrisBlock,
+                */
+            ]);
+        }
+
+        function getCubeIndexes() { //ligando os pontos
+            return new Uint16Array([
+                0, 1, 2, 0, 2, 3, // Front
+                4, 5, 6, 4, 6, 7, // Back
+                0, 1, 5, 0, 5, 4, // Bottom
+                2, 3, 7, 2, 7, 6, // Top
+                0, 3, 7, 0, 7, 4, // Left
+                1, 2, 6, 1, 6, 5  // Right
+            ])
+        }
+
+        function getVertices() {
+            return new Float32Array([
+                -0.5,0.5,0.0,
+                -0.5,-0.5,0.0,
+                0.5,-0.5,0.0,
+                0.5,0.5,0.0 
+            ]); 
+        }
+
+        function getIndexes() {
+            return new Uint16Array([3,2,1,3,1,0]);
+        }
+
+        const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+        const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+
+        const program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+            console.error('Program link failed:', gl.getProgramInfoLog(program));
+            gl.deleteProgram(program);
+            //return;   //returning exception of unhandled illegal return statement
+        }
+        gl.useProgram(program);
+
+        let unitSizeTetrisBlock = 0.5;
+
+        /*
+        1 1
+        1 1
+        */
+
+        // Cube vertices
+        
+        const cubeVertices = getCubeVetices(unitSizeTetrisBlock);   //getVertices();    getCubeVetices(unitSizeTetrisBlock)
+
+        /*
+        const cubeVertices = new Float32Array([
+            // Front face
+            -0.5, -0.5,  0.5,
+             0.5, -0.5,  0.5,
+             0.5,  0.5,  0.5,
+            -0.5,  0.5,  0.5,
+
+            // Back face
+            -0.5, -0.5, -0.5,
+             0.5, -0.5, -0.5,
+             0.5,  0.5, -0.5,
+            -0.5,  0.5, -0.5
+        ]);
+        */
+
+        const cubeIndices = getCubeIndexes(); //getIndexes();   getCubeIndexes();
+
+        /**/
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, cubeVertices, gl.STATIC_DRAW);
+
+        const indexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, cubeIndices, gl.STATIC_DRAW);
+
+        // Attribute locations
+        const aPositionLocation = gl.getAttribLocation(program, 'aPosition');
+        gl.enableVertexAttribArray(aPositionLocation);
+        gl.vertexAttribPointer(aPositionLocation, 3, gl.FLOAT, false, 0, 0);
+
+        // Uniform locations
+        const uModelMatrixLocation = gl.getUniformLocation(program, 'uModelMatrix');
+        const uViewMatrixLocation = gl.getUniformLocation(program, 'uViewMatrix');
+        const uProjectionMatrixLocation = gl.getUniformLocation(program, 'uProjectionMatrix');
+        const uColorLocation = gl.getUniformLocation(program, 'uColor');
+
+        // Matrices
+        function createIdentityMatrix() {
+            return [
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            ];
+        }
+
+        function createRotationMatrixX(angle) {
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+            return [
+                1, 0, 0, 0,
+                0, cos, -sin, 0,
+                0, sin, cos, 0,
+                0, 0, 0, 1
+            ];
+        }
+
+        function createPerspectiveMatrix(fov, aspect, near, far) {
+            const f = 1.0 / Math.tan(fov / 2);
+            const rangeInv = 1 / (near - far);
+            return [
+                f / aspect, 0, 0, 0,
+                0, f, 0, 0,
+                0, 0, (near + far) * rangeInv, -1,
+                0, 0, near * far * rangeInv * 2, 0
+            ];
+        }
+
+        function rotateMatrix90(matrix, size, axis) {
+            const height = size.height;
+            const width = size.width;
+            const depth = size.depth;
+
+            let newMatrix = getMatrixZeros(height, width, depth);
+
+            if (axis === 'x') {
+                // Rotate around X-axis
+                //newMatrix = Array.from({ length: height }, () =>
+                //    Array.from({ length: depth }, () => new Array(width).fill(0))
+                //);
+                
+                for (let i = 0; i < height; i++) {
+                    for (let j = 0; j < width; j++) {
+                        for (let k = 0; k < depth; k++) {
+                            let indexOld = get1DIndex(i, j, k, width, depth);
+                            let indexNew = get1DIndex(i, k, width - j - 1, width, depth);
+                            newMatrix[indexNew] = matrix[indexOld];
+                            //newMatrix[i][k][width - j - 1] = matrix[i][j][k];
+                        }
+                    }
+                }
+            } else if (axis === 'y') {
+                // Rotate around Y-axis
+                //newMatrix = Array.from({ length: depth }, () =>
+                //    Array.from({ length: width }, () => new Array(height).fill(0))
+                //);
+
+                for (let i = 0; i < height; i++) {
+                    for (let j = 0; j < width; j++) {
+                        for (let k = 0; k < depth; k++) {
+                            let indexOld = get1DIndex(i, j, k, width, depth);
+                            let indexNew = get1DIndex(depth - k - 1, j, i, width, depth);
+                            newMatrix[indexNew] = matrix[indexOld];
+                            //newMatrix[depth - k - 1][j][i] = matrix[i][j][k];
+                        }
+                    }
+                }
+            } else if (axis === 'z') {
+                // Rotate around Z-axis
+                //newMatrix = Array.from({ length: width }, () =>
+                //    Array.from({ length: height }, () => new Array(depth).fill(0))
+                //);
+
+                for (let i = 0; i < height; i++) {
+                    for (let j = 0; j < width; j++) {
+                        for (let k = 0; k < depth; k++) {
+                            let indexOld = get1DIndex(i, j, k, width, depth);
+                            let indexNew = get1DIndex(j, height - i - 1, k, width, depth);
+                            newMatrix[indexNew] = matrix[indexOld];
+                            //newMatrix[j][height - i - 1][k] = matrix[i][j][k];
+                        }
+                    }
+                }
+            }
+
+            return newMatrix;
+        }
+
+        //start fernando
+
+        function getMatrixZeros(height, width, depth) {
+            //let matrix = new Uint16Array([])
+            let matrix = Array.from({ length:height*width*depth });
+            //console.log(matrix, 'before', height, width, depth);
+
+            matrix.fill(0, 0, height*width*depth);
+            //console.log(matrix);
+
+            return matrix;
+        }
+
+        class Size {
+            constructor(height, width, depth) {
+                this.height = height;
+                this.width = width;
+                this.depth = depth;                
+            }
+        }
+
+        function get1DIndex(i, j, k, width, depth) {
+            //if()
+            //console.log(i, j, k, width, depth);
+            //console.log(i * (width * depth) + j * depth + k);
+            return i * (width * depth) + j * depth + k;
+        }
+
+        function clone( json ) {
+            return (JSON.parse(JSON.stringify(json)));
+        }
+
+        class Scenario {
+            constructor(size) {
+                this.size = size;
+                
+                this.matrix = getMatrixZeros(this.size.height,this.size.width,this.size.depth);
+
+                //this.treatingCollisionWithScenarioBlocks = false;
+            }
+
+            constructMatrixRender(block) {
+                //console.log('constructMatrixRender', block, this.matrix);   //this.treatingCollisionWithScenarioBlocks
+                let matrix = clone(this.matrix);
+
+                //console.log('constructMatrixRender', block);
+
+                //block part
+                for(let i = 0; i<block.size.height; i++) {
+                    for(let j = 0; j<block.size.width; j++) {
+                        for(let k = 0; k<block.size.depth; k++) {
+                            let indexBlockMatrix = get1DIndex(
+                                i,//block.position.x+i,
+                                j,//block.position.y+j,
+                                k,//block.position.z+k, 
+                                block.size.width,
+                                block.size.depth
+                            );
+                            let value = block.matrix[indexBlockMatrix]
+                            if(value == 1) {
+                                /**/
+                                //let index = 
+                                //    block.position.x * 1 +
+                                //    block.position.y * 2 +
+                                //    block.position.z * 3
+                                //i, j, k
+                                let indexScenarioMatrix = get1DIndex(
+                                    block.position.x+i,
+                                    block.position.y+j,
+                                    block.position.z+k, 
+                                    this.size.width,
+                                    this.size.depth
+                                );
+                                if(matrix[indexScenarioMatrix] == 1) {
+                                //    this.treatingCollisionWithScenarioBlocks = true;
+                                    console.log('constructMatrixRender->this.treatingCollisionWithScenarioBlocks', this.treatingCollisionWithScenarioBlocks);
+                                    //this.handleCollision();
+                                    return;
+                                }
+                                matrix[indexScenarioMatrix] = 1;
+                                //console.log(block.matrix.length, value);
+                            }
+                        }
+                    }
+                }
+
+                return matrix;
+            }
+
+            dropBlock(block) {
+                console.log('dropBlock');
+                let newMatrix = this.constructMatrixRender(block);
+                console.log('dropBlock', newMatrix, block);
+                if(newMatrix != undefined) {
+                    this.matrix = newMatrix;
+                }
+            }
+
+            newBlock() {
+                let blockSize = new Size(2,2,2);    //2,2,2
+                let blockPosition = new Position(0,scenario.size.height-blockSize.height,0); //start on sky 0 or floor 0, sky 0, floor units below
+                block = new Block(blockPosition, blockSize);
+                block.matrix[ get1DIndex(0, 0, 0, block.size.width, block.size.depth) ] = 1;
+                block.matrix[ get1DIndex(1, 0, 0, block.size.width, block.size.depth) ] = 1;
+                //block.matrix[ get1DIndex(0, 1, 0, block.size.width, block.size.depth) ] = 1;
+                //block.matrix[ get1DIndex(1, 1, 0, block.size.width, block.size.depth) ] = 1;
+                //block.matrix[ get1DIndex(0, 0, 1, block.size.width, block.size.depth) ] = 1;
+                //block.matrix[ get1DIndex(1, 0, 1, block.size.width, block.size.depth) ] = 1;
+                //block.matrix[ get1DIndex(0, 1, 1, block.size.width, block.size.depth) ] = 1;
+                //block.matrix[ get1DIndex(1, 1, 1, block.size.width, block.size.depth) ] = 1;
+                
+                //rotateMatrix90Handler('z');
+            }
+
+            blockDistanceTouchGround() {
+                //block part
+                if(block.position.y + block.size.height > 0) {
+                    return block.position.y;
+                }
+
+                for(let i = 0; i<block.size.height; i++) {
+                    for(let j = 0; j<block.size.width; j++) {
+                        for(let k = block.size.depth-1; k>=0; k--) {
+                            let indexBlockMatrix = get1DIndex(
+                                i,//block.position.x+i,
+                                j,//block.position.y+j,
+                                k,//block.position.z+k, 
+                                block.size.width,
+                                block.size.depth
+                            );
+                            let value = block.matrix[indexBlockMatrix]
+                            if(value == 1) {
+                                return block.size.depth-k;
+                            }
+                        }
+                    }
+                }
+                console.log('finished searching');
+                return block.position.y;
+            }
+
+            fitBlockFloor() {
+                let distanceToGround = this.blockDistanceTouchGround();
+                console.log('distanceToGround', distanceToGround, 'block.position.y', block.position.y);
+                block.position.y -= distanceToGround;
+
+                //while(distanceToGround = this.blockTouchGround() && block.position.y > 0) {
+                //    console.log(distanceToGround);
+                //    block.position.y++;
+                //}
+            }
+
+            handleCollision() {
+                //fit the block on floor if it aren't
+                //console.log('this.treatingCollisionWithScenarioBlocks', this.treatingCollisionWithScenarioBlocks);
+                //if(!this.treatingCollisionWithScenarioBlocks) {
+                    //this.fitBlockFloor();
+                //}
+                this.dropBlock(block);
+                this.newBlock();
+            }
+
+            checkCollision() {
+                //console.log('checkCollision', block.position.y < block.size.height, block.position.y, block.size.height);
+                
+                let resultMatrix = this.constructMatrixRender(block);
+                //console.log('ainda não entrou aqui y--', resultMatrix);
+                if(resultMatrix == undefined) { //collision with scenario blocks
+                    //console.log('entrou aqui y--');
+                    step('y',1);    //move back to up
+                    this.handleCollision();
+                    //console.log('depois do handling collision y--');
+                } else if(block.position.y < block.size.height) {
+                    this.handleCollision();
+                }
+            }
+
+            render() {
+                this.checkCollision();
+
+
+                //console.log('inside');
+                gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+                gl.enable(gl.DEPTH_TEST);
+
+                let matrix = this.constructMatrixRender(block);
+                //console.log(matrix, block, this.size);
+                console.log(block);
+                for(let i = 0; i<this.size.height; i++) {
+                    for(let j = 0; j<this.size.width; j++) {
+                        for(let k = 0; k<this.size.depth; k++) {
+                            //let index = i*1+j*2+k*3;
+                            let index = get1DIndex(i, j, k, this.size.width, this.size.depth);
+                            let value = matrix[index]
+
+                            if(value == 1) {
+                                //console.log('before renderUnitaryCube', value, index, i, j, k);
+                                renderUnitaryCube(new Position(i, j, k));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function intervalHandler() {
+            yStep();
+            scenario.render();
+        }
+
+        class Block {
+            constructor(position, size) {
+                this.position = position;
+                this.size = size;
+                this.matrix = getMatrixZeros(this.size.height,this.size.width,this.size.depth);
+            }
+        }
+
+        class Position {
+            constructor(x, y, z) {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+            }
+        }
+
+        function createTranslationMatrix(x, y, z) {
+            return [
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                x, y, z, 1
+            ];
+        }
+
+        function renderUnitaryCube(position) {
+            //console.log('here!', position);
+            const translationMatrix = createTranslationMatrix(position.x, position.y, position.z);
+
+            // Combine model matrix with translation
+            const unitaryCubeMatrix = translationMatrix; // For simplicity, just translate
+
+            //console.log(uModelMatrixLocation, unitaryCubeMatrix);
+            /*
+            gl.uniformMatrix4fv(uModelMatrixLocation, false, new Float32Array(unitaryCubeMatrix));
+            gl.uniform4f(uColorLocation, 0.2, 0.8, 0.4, 1.0);
+
+            gl.drawElements(gl.TRIANGLES, cubeIndices.length, gl.UNSIGNED_SHORT, 0);
+            */
+
+            gl.uniformMatrix4fv(uModelMatrixLocation, false, new Float32Array(unitaryCubeMatrix));    //Fernando: it's the block?
+            gl.uniformMatrix4fv(uViewMatrixLocation, false, new Float32Array(viewMatrix));
+            gl.uniformMatrix4fv(uProjectionMatrixLocation, false, new Float32Array(projectionMatrix));
+            gl.uniform4f(uColorLocation, 0.2, 0.8, 0.4, 1.0);
+
+            gl.drawElements(gl.TRIANGLES, cubeIndices.length, gl.UNSIGNED_SHORT, 0);
+        }
+
+        //controls
+
+        function onKeyDownHandler( event )
+        {
+            //console.log('hereaa');
+            let element = event.target;
+
+            if( event.key == ';' ) {
+                yStep();
+
+                scenario.render();
+                //requestAnimationFrame(render);
+            }
+
+            if( ['x','y','z'].includes(event.key) ) {
+                rotateMatrix90Handler(event.key);
+
+                scenario.render();
+                //requestAnimationFrame(render);
+            }
+
+            if( event.key == 'a' ) {
+                step('x',-1);
+                scenario.render();
+            }
+            if( event.key == 'd' ) {
+                step('x',1);
+                scenario.render();
+            }
+            if( event.key == 's' ) {
+                step('z',1);
+                scenario.render();
+            }
+            if( event.key == 'w' ) {
+                step('z',-1);
+                scenario.render();
+            }
+
+            if( event.key == '+' ) {
+                setCameraDistance(5);
+
+                scenario.render();
+                //requestAnimationFrame(render);
+            }
+
+            if( event.key == '-' ) {
+                setCameraDistance(-5);
+
+                scenario.render();
+                //requestAnimationFrame(render);
+            }
+
+            if( event.key == '.' ) {
+                time += 1;
+                const angle = time * 0.001;
+                modelMatrix = createRotationMatrixX(angle);
+
+                // Update camera angles (rotate slowly over time)
+                cameraAngleY = time * 0.0005;
+
+                // Update the view matrix with the rotated camera
+                const newViewMatrix = updateCameraViewMatrix();
+                viewMatrix = newViewMatrix;
+            }
+        }
+
+        function rotateMatrix90Handler(axisCharacter) {
+            block.matrix = rotateMatrix90(block.matrix, block.size, axisCharacter);
+        }
+
+        function setCameraDistance(cameraDistance) {
+            viewMatrix[14] += cameraDistance;
+        }
+
+        function yStep(){
+            block.position.y-=1;
+        }
+
+        function stepIsValid(actualValue, amount, axis) {
+            let newValue = actualValue+amount;
+            if(axis == 'x' && (newValue < 0 || newValue > scenario.size.width)) {
+                return false;
+            }
+
+            if(axis == 'z' && (newValue < 0 || newValue > scenario.size.depth)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        function step(axis, amount){
+            if(stepIsValid(block.position[axis], amount, axis)) {
+                block.position[axis]+=amount;
+            }
+        }
+
+        //end fernando
+
+        //camera start
+
+        let cameraAngleX = 0;
+        let cameraAngleY = 0;
+
+        function createRotationMatrixY(angle) {
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+            return [
+                cos, 0, sin, 0,
+                0, 1, 0, 0,
+                -sin, 0, cos, 0,
+                0, 0, 0, 1
+            ];
+        }
+
+        function createRotationMatrixZ(angle) {
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+            return [
+                cos, -sin, 0, 0,
+                sin, cos, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            ];
+        }
+
+        function updateCameraViewMatrix() {
+            // Start with the identity matrix
+            let newViewMatrix = createIdentityMatrix();
+
+            // Apply rotation on Y-axis
+            const rotationY = createRotationMatrixY(cameraAngleY);
+            for (let i = 0; i < 16; i++) {
+                newViewMatrix[i] = rotationY[i];
+            }
+
+            // Apply translation to move the camera back (along Z-axis)
+            newViewMatrix[14] = viewMatrix[14];
+
+            return newViewMatrix;
+        }
+
+
+        //camera end
+
+
+        // Initial matrices
+        const projectionMatrix = createPerspectiveMatrix(
+            Math.PI / 4,
+            canvas.width / canvas.height,
+            0.1,
+            100
+        );
+
+        var viewMatrix = createIdentityMatrix();
+        setCameraDistance(-35);
+        //viewMatrix[14] = cameraDistance; // Move the camera back
+
+        let modelMatrix = createIdentityMatrix();
+        
+        var timeoutHandler;
+        var timeToRefresh = 2*1000;
+        let scenario = new Scenario(new Size(10, 10, 10));
+        var block;
+        scenario.newBlock();
+        var time = 0;
+        //block.position.y = 0;
+        //console.log(block.position.y, scenario.blockDistanceTouchGround());
+        //yStep();
+        //console.log(block.position.y, scenario.blockDistanceTouchGround());
+        
+        /*
+        let blockPosition = new Position(0,10,0);  //scenario.size.width //start on sky 0 or floor 0, sky 0, floor units below
+        var block = new Block(blockPosition, new Size(2,2,2));
+        block.matrix[ get1DIndex(0, 0, 0, block.size.width, block.size.depth) ] = 1;
+        block.matrix[ get1DIndex(1, 0, 0, block.size.width, block.size.depth) ] = 1;
+        //block.matrix[ get1DIndex(0, 1, 0, block.size.width, block.size.depth) ] = 1;
+        //block.matrix[ get1DIndex(1, 1, 0, block.size.width, block.size.depth) ] = 1;
+        //block.matrix[ get1DIndex(0, 0, 1, block.size.width, block.size.depth) ] = 1;
+        //block.matrix[ get1DIndex(1, 0, 1, block.size.width, block.size.depth) ] = 1;
+        //block.matrix[ get1DIndex(0, 1, 1, block.size.width, block.size.depth) ] = 1;
+        //block.matrix[ get1DIndex(1, 1, 1, block.size.width, block.size.depth) ] = 1;
+        
+        //block.matrix = rotateMatrix90(block.matrix, block.size, 'z');
+        //rotateMatrix90Handler('z');
+
+        console.log(block.matrix);
+        */
+
+        // Animation loop
+        function render(time) {
+            /*gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.enable(gl.DEPTH_TEST);
+
+            //Fernando: change it to receive a 90º rotate while using keyboard comand to rotate, in one direction first as it's implemented
+            const angle = time * 0.001; //0 
+            modelMatrix = createRotationMatrixX(angle);
+            //const modelMatrix = createTranslationMatrix(block.position.x, block.position.y, block.position.z);
+
+            gl.uniformMatrix4fv(uModelMatrixLocation, false, new Float32Array(modelMatrix));    //Fernando: it's the block?
+            gl.uniformMatrix4fv(uViewMatrixLocation, false, new Float32Array(viewMatrix));
+            gl.uniformMatrix4fv(uProjectionMatrixLocation, false, new Float32Array(projectionMatrix));
+            gl.uniform4f(uColorLocation, 0.2, 0.8, 0.4, 1.0);
+
+            gl.drawElements(gl.TRIANGLES, cubeIndices.length, gl.UNSIGNED_SHORT, 0);
+            */
+            
+            //console.log('before');
+            
+            //main loop
+
+            //1
+            //scenario.render();
+
+            //2
+            timeoutHandler = window.setInterval(function(){
+                yStep();
+                scenario.render()
+            }, timeToRefresh);
+
+            //requestAnimationFrame(render);
+        }
+
+        document.body.onkeydown = function(e){
+            onKeyDownHandler(e);
+        };
+
+        requestAnimationFrame(render);
+    </script>
+</body>
+</html>
