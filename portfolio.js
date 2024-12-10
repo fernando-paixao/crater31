@@ -25,7 +25,7 @@ const contents = [
     },
     {
         menuPaths: ['me.projects.Tetris3D'],
-        markdownContent: '# Tetris 3D Like\n\nGitHub (source code):https://github.com/fernando-paixao/crater31/blob/master/tetris3d.html\n\n<img src="public/tetris3d.png" width="100%">',
+        markdownContent: '# Tetris 3D Like\n\nUsage:https://fernando-paixao.github.io/crater31/tetris3d.html\n\nGitHub (source code):https://github.com/fernando-paixao/crater31/blob/master/tetris3d.html\n\n<img src="public/tetris3d.png" width="100%">',
         keywords: ['me', 'projects', 'tetris3D', 'game', 'puzzle', '3D', 'webgl', 'opengl']
     },
     {
