@@ -24,6 +24,11 @@ const contents = [
         keywords: ['me']
     },
     {
+        menuPaths: ['me.projects.Tetris3D'],
+        markdownContent: '# Tetris 3D Like\n\nGitHub (source code):https://github.com/fernando-paixao/crater31/blob/master/tetris3d.html\n\n<img src="public/tetris3d.png" width="100%">',
+        keywords: ['me', 'projects', 'tetris3D', 'game', 'puzzle', '3D', 'webgl', 'opengl']
+    },
+    {
         menuPaths: ['me.projects.MindmapGrammar'],
         markdownContent: '# MindmapGrammar\n\nReplit (source code):https://replit.com/@fvpengsoftware/PeriodGrammarCategorized\n\n<img src="public/mindmapGrammar.png" width="100%">',
         //https://drive.usercontent.google.com/download?export=view&id=1ON6HqddHTtRAd1jDBuuz2uw-OXhJ-iJO
