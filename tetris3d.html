@@ -295,13 +295,43 @@ function degToRad(d) {
 <body>
     <canvas id="gameCanvas"></canvas>
     <div id="overlay">
-        <div>Debug: <span id="debug"></span></div>
+        <div>Position: <span id="debug"></span></div>
+        <div>Score: <span id="debug2"></span></div>
+        <div>Blocks Per Line: <span id="debug3"></span></div>
+        <div><button onclick="toogleHelp();">Help</button>
+            <div id="help" style="display: none;"><pre>
+Keyboard Keys
+
+Block
+Move : ASDW
+Rotate: RTY
+
+Camera
+Zoom In: +
+Zoom Out: -
+Move: UIO
+Move back: JKL
+
+Special
+Move block down: ;
+Toogle Random Blocks: ,
+Fill Blocks on First Line: .
+--------
+Thanks to:
+My teachers Carla Rocha and Edson Alves
+From University of Brasilia (campus Gama)
+And webglfundamentals.org great tutorials
+            </pre></div>
+        </div>
     </div>
 
     <script>
         //fernando before
 
         const debug = document.getElementById('debug');
+        const debug2 = document.getElementById('debug2');
+        const debug3 = document.getElementById('debug3');
+        const help = document.getElementById('help');
 
         //end fernando before
 
@@ -578,11 +608,31 @@ function degToRad(d) {
             }
         }
 
+        //i => x (width)
+        //j => y (depth)
+        //k => z (height)
+        //what it seems like
+        //i => x
+        //j => y
+        //k => z
+        //https://math.stackexchange.com/questions/2943227/transforming-3d-matrix-into-1d-matrix-and-back
+            //N(i,j,k)=(i % n)+(j % n)⋅n+(k % n)⋅n2
+            //N(i,j,k)=i+j⋅n+k⋅n2
+                //N(i,j,k)=
+                    //i+
+                    //j⋅n+
+                    //k⋅n2
         function get1DIndex(i, j, k, width, depth) {
             //if()
             //console.log(i, j, k, width, depth);
             //console.log(i * (width * depth) + j * depth + k);
-            return i * (width * depth) + j * depth + k;
+            
+            return  i * (width * depth) + 
+                    j * depth + 
+                    k;
+            //return  j * (width * depth) + 
+            //        k * depth + 
+            //        i;
         }
 
         function clone( json ) {
@@ -595,12 +645,24 @@ function degToRad(d) {
                 
                 this.matrix = getMatrixZeros(this.size.height,this.size.width,this.size.depth);
 
+                this.score = 0;
+
+                this.randomBlocks = true;
+
                 //this.treatingCollisionWithScenarioBlocks = false;
             }
 
             constructMatrixRender(block) {
                 //console.log('constructMatrixRender', block, this.matrix);   //this.treatingCollisionWithScenarioBlocks
                 let matrix = clone(this.matrix);
+
+                //setDebugInfo(
+                //    JSON.stringify(matrix)
+                //    //+'<br>'+JSON.stringify(translationMatrix)
+                //    //+'<br>'+JSON.stringify(unitaryCubeMatrix)
+                //    //+'<br>'+JSON.stringify(projectionMatrix)
+                //    //+'<br>'+JSON.stringify(uModelMatrixLocation)
+                //, 1);
 
                 //console.log('constructMatrixRender', block);
 
@@ -657,8 +719,15 @@ function degToRad(d) {
 
             newBlock() {
                 let blockSize = new Size(2,2,2);    //2,2,2
+                //console.log(scenario.size.height-blockSize.height);
+                
                 let blockPosition = new Position(0,scenario.size.height-blockSize.height,0); //start on sky 0 or floor 0, sky 0, floor units below
                 //console.log(blockPosition);
+                //setDebugInfo(
+                //    JSON.stringify([scenario.size.height,blockSize.height]) +
+                //    JSON.stringify(blockPosition)
+                //    //+'<br>'+JSON.stringify(translationMatrix)
+                //);
                 block = new Block(blockPosition, blockSize);
                 
                 //rotateMatrix90Handler('z');
@@ -702,6 +771,18 @@ function degToRad(d) {
                 //}
             }
 
+            scoreChange(amount) {
+                this.score += amount;
+                setDebugInfo(
+                    this.score
+                    //JSON.stringify(matrix)
+                    //+'<br>'+JSON.stringify(translationMatrix)
+                    //+'<br>'+JSON.stringify(unitaryCubeMatrix)
+                    //+'<br>'+JSON.stringify(projectionMatrix)
+                    //+'<br>'+JSON.stringify(uModelMatrixLocation)
+                , 1);
+            }
+
             handleCollision() {
                 //fit the block on floor if it aren't
                 //console.log('this.treatingCollisionWithScenarioBlocks', this.treatingCollisionWithScenarioBlocks);
@@ -709,6 +790,18 @@ function degToRad(d) {
                     //this.fitBlockFloor();
                 //}
                 this.dropBlock(block);
+                //TODO: while here
+                let lineFilled;
+                do {
+                    lineFilled = this.scenarioVerifyLineFilled()
+                    if(lineFilled != undefined) {
+                        this.scoreChange(100);
+                        console.log({
+                            lineFilled: lineFilled,
+                        });
+                        this.scenarioSwapUpperLine(lineFilled);
+                    }
+                } while(lineFilled != undefined);
                 this.newBlock();
             }
 
@@ -724,6 +817,62 @@ function degToRad(d) {
                     //console.log('depois do handling collision y--');
                 } else if(block.position.y < block.size.height) {
                     this.handleCollision();
+                }
+            }
+
+            //After drop block? -> Verify if some line is filled, swap that line to upper
+            scenarioSwapUpperLine(lineNumber) {
+                for(let i = 0; i<this.size.height; i++) {
+                    for(let j = lineNumber; j<this.size.width-1; j++) {
+                        for(let k = 0; k<this.size.depth; k++) {
+                            let index = get1DIndex(i, j, k, this.size.width, this.size.depth);
+                            let indexAbove = get1DIndex(i, j+1, k, this.size.width, this.size.depth);
+                            
+                            this.matrix[index] = this.matrix[indexAbove];
+                        }
+                    }
+                }
+            }
+
+            fillAlmostAll(lineNumber, initialI) {
+                for(let i = initialI; i<this.size.height; i++) {
+                    for(let j = lineNumber; j<lineNumber+1; j++) {
+                        for(let k = 0; k<this.size.depth; k++) {
+                            let index = get1DIndex(i, j, k, this.size.width, this.size.depth);
+                            this.matrix[index] = 1;
+                        }
+                    }
+                }
+            }
+
+            scenarioVerifyLineFilled() {
+                let countByLine = [];
+                for(let j = 0; j<this.size.width; j++) {    //maybe pass to upper
+                    let count = 0;
+                    for(let i = 0; i<this.size.height; i++) {
+                        for(let k = 0; k<this.size.depth; k++) {
+                            let index = get1DIndex(i, j, k, this.size.width, this.size.depth);
+                            
+                            if(this.matrix[index] == 1) {
+                                count++;
+                            }
+                        }
+                    }
+                    //console.log({
+                    //    count: count,
+                    //    line: j,
+                    //});
+                    countByLine.push(
+                        count
+                        /*{
+                            count: count,
+                            line: j,
+                        }*/
+                    );
+                    setDebugInfo(JSON.stringify(countByLine),2);
+                    if(count == this.size.width * this.size.depth) {
+                        return j;   //j?
+                    }
                 }
             }
 
@@ -770,6 +919,9 @@ function degToRad(d) {
 
             fillMatrix() {
                 let randomNumber = getRndInteger(0, 2);
+                if(scenario.randomBlocks == false) {
+                    randomNumber = 2;
+                }
 
                 if(randomNumber == 0) {
                     this.matrix[ get1DIndex(0, 0, 0, this.size.width, this.size.depth) ] = 1;
@@ -869,6 +1021,7 @@ function degToRad(d) {
             gl.drawElements(gl.TRIANGLES, cubeIndices.length, gl.UNSIGNED_SHORT, 0);
             */
 
+            //voltar
             setDebugInfo(
                 JSON.stringify(position)
                 //+'<br>'+JSON.stringify(translationMatrix)
@@ -898,6 +1051,21 @@ function degToRad(d) {
                 scenario.render();
                 //requestAnimationFrame(render);
             }
+            if( event.key == '.' ) {
+                let lineNumber = 1;
+                let initialI = 0;
+                scenario.fillAlmostAll(lineNumber, initialI);
+                scenario.render();
+            }
+            if( event.key == ',' ) {
+                scenario.randomBlocks = !scenario.randomBlocks;
+            }
+
+            //if( event.key == '.' ) {
+            //    let lineNumber = 1;
+            //    scenario.scenarioSwapUpperLine(lineNumber);
+            //    scenario.render();
+            //}
 
             //if( ['x','y','z'].includes(event.key) ) {
             //    rotateMatrix90Handler(event.key);
@@ -1082,8 +1250,26 @@ function degToRad(d) {
             //viewMatrix[rotationAxis] += increment;
         }
 
-        function setDebugInfo(data) {
-            debug.innerHTML = data;
+        function setDebugInfo(data, position) {
+            if(position == undefined) {
+                position = 0;
+            }
+
+            if(position == 0) {
+                debug.innerHTML = data;
+            } else if(position == 1) {
+                debug2.innerHTML = data;
+            } else if(position == 2) {
+                debug3.innerHTML = data;
+            }
+        }
+
+        function toogleHelp() {
+            if (help.style.display === "none") {
+                help.style.display = "block";
+            } else {
+                help.style.display = "none";
+            }
         }
 
 
@@ -1107,11 +1293,12 @@ function degToRad(d) {
         var timeoutHandler;
         rotationAxis = 'x';
         var rotation = {
-            'x': 0,
+            'x': -45,
             'y': 45,
             'z': 0,
         };
-        let scenario = new Scenario(new Size(10, 10, 10));
+        let scenario = new Scenario(new Size(10, 10, 10));  //10, 10, 10
+        scenario.scoreChange(0);
         var block;
         scenario.newBlock();
         var time = 0;
