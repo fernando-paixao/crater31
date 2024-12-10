@@ -10,7 +10,7 @@ const contents = [
     {
         //parei aqui no content, pensei em criar depois de duas linhas experiências passadas de estudo e profissionais
         menuPaths: ['me.experience'],
-        markdownContent: '# Me\nI\'m a professional developer since 01/09/2008\n\nToday as fullStack developer on Soluti on a remote job\n\nFreelancer and instructor sometimes\n\nMore in my curriculum: https://www.linkedin.com/in/fernando-vieira-paix%C3%A3o-326817142/overlay/1583505076069/single-media-viewer/?profileId=ACoAACKmAg4B57vaQeR_5NIkTEGnmyTB4mx15TQ',
+        markdownContent: '# Me\nI\'m a professional developer since 01/09/2008\n\nWorking as FullStack developer on Soluti on a remote job\n\nFreelancer and instructor sometimes\n\nMore in my curriculum: https://www.linkedin.com/in/fernando-vieira-paix%C3%A3o-326817142',
         keywords: ['me']
     },
     {
