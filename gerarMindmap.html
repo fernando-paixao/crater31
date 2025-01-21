@@ -91,6 +91,9 @@ function replaceIdentToAsterisksAndAddSingleSpace(str) {
     }
     let secondPart = str.substring(firstPart.length);
     
+    //remove comments
+    secondPart = secondPart.replace(/\ '.*$/, '');
+    
     firstPart = '*'+firstPart.replaceAll("    ", "*");
     secondPart = escapeAsterisks(secondPart);
     return firstPart+' '+secondPart;
