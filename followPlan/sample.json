@@ -52,7 +52,7 @@
         "reminderDays": 7,
         "milestones": [
             { "amount": 1, "title": "Avaliação" },
-            { "amount": 2, "title": "Entrevista" }
+            { "amount": 1, "title": "Entrevista" }
         ]
     },
     {
