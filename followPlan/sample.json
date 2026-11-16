@@ -1,0 +1,64 @@
+[
+    {
+        "name": "N1 4 Mêses - Ética",
+        "startDate": "2026-11-17",
+        "milestonesUnit": "weeks",
+        "reminderDays": 7,
+        "milestones": [
+            { "amount": 1, "title": "Filosofia Natural" },
+            { "amount": 2, "title": "O Ser Humano e o Cosmos" },
+            { "amount": 2, "title": "A Sabedoria da Índia" },
+            { "amount": 2, "title": "Os Mistérios do Tibet" },
+            { "amount": 1, "title": "Filosofia Budista" },
+            { "amount": 1, "title": "A Sabedoria na China" }
+        ]
+    },
+    {
+        "name": "N1 4 Mêses - Sociedade",
+        "startDate": "2026-11-17",
+        "milestonesUnit": "weeks",
+        "reminderDays": 7,
+        "milestones": [
+            { "amount": 1, "title": "Filosofia Natural" },
+            { "amount": 2, "title": "Platão" },
+            { "amount": 1, "title": "Aristóteles" },
+            { "amount": 1, "title": "Plotino e a Escola Neoplatônica" },
+            { "amount": 2, "title": "Importância da Educação" },
+            { "amount": 1, "title": "Egito" },
+            { "amount": 1, "title": "Roma e os Estoicos" }
+        ]
+    },
+    {
+        "name": "N1 4 Mêses - Filosofia da História",
+        "startDate": "2026-11-17",
+        "milestonesUnit": "weeks",
+        "reminderDays": 7,
+        "milestones": [
+            { "amount": 1, "title": "Filosofia da História " },
+            { "amount": 1, "title": "Importância da Transmissão " },
+            { "amount": 1, "title": "História e Mitologia" },
+            { "amount": 1, "title": "Os Ciclos da História e Teoria Eterno Retorno" },
+            { "amount": 2, "title": "Liberdade e Destino" }
+        ]
+    },
+    {
+        "name": "N1 4 Mêses - Encerramento",
+        "startDate": "2026-11-17",
+        "milestonesUnit": "weeks",
+        "reminderDays": 7,
+        "milestones": [
+            { "amount": 1, "title": "Avaliação" },
+            { "amount": 2, "title": "Entrevista" }
+        ]
+    },
+    {
+        "name": "N1 4 Mêses - Transpasso",
+        "startDate": "2026-11-17",
+        "milestonesUnit": "weeks",
+        "reminderDays": 7,
+        "milestones": [
+            { "amount": 2, "title": "Transição para o Nível 2 — Parte 1" },
+            { "amount": 2, "title": "Transição para o Nível 2 — Parte 2" }
+        ]
+    }
+]
