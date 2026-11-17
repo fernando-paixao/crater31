@@ -2,7 +2,7 @@
     {
         "name": "N1 4 Mêses - Ética",
         "id": "Ética",
-        "startDate": "2026-11-17",
+        "startDate": "2026-11-24",
         "milestonesUnit": "weeks",
         "reminderDays": 7,
         "milestones": [
@@ -17,7 +17,7 @@
     {
         "name": "N1 4 Mêses - Sociedade",
         "id": "Sociedade",
-        "startDate": "2026-11-17",
+        "startDate": "2026-11-24",
         "milestonesUnit": "weeks",
         "reminderDays": 7,
         "milestones": [
